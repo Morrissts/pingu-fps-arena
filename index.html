@@ -1,0 +1,1697 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17213f">
+  <title>Pingu FPS Arena</title>
+  <style>
+    :root { color-scheme: dark; font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; --ink: #171b3b; --deep: #11142f; --ice: #f2fbff; --muted: #c5d0ed; --mint: #8af2d0; --coral: #ff806e; --gold: #ffd878; --lilac: #b4a5ff; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #151936; }
+    body { color: var(--ice); }
+    #game { display: block; width: 100%; height: 100%; cursor: crosshair; }
+    .vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 42%, #090d24a8 100%); }
+    .topbar { position: fixed; inset: 0 0 auto; display: flex; justify-content: space-between; align-items: flex-start; padding: 22px 28px; pointer-events: none; text-shadow: 0 2px 8px #10142d; }
+    .brand { color: var(--gold); font-size: 11px; letter-spacing: .17em; text-transform: uppercase; font-weight: 900; }
+    .brand strong { display: block; margin-top: 4px; color: white; font-size: 24px; letter-spacing: -.035em; text-shadow: 2px 3px 0 #212650, 0 4px 16px #0b102d; }
+    .stats { display: flex; gap: 9px; }
+    .stat { min-width: 84px; padding: 9px 13px 8px; border: 2px solid #e5ddff8c; border-radius: 15px; background: #191d43d9; text-align: center; box-shadow: 0 5px 0 #10132b, 0 10px 30px #10132b70; backdrop-filter: blur(7px); }
+    .stat:nth-child(1) { border-color: #ffb679; } .stat:nth-child(2) { border-color: #b4a5ff; } .stat:nth-child(3) { border-color: #8af2d0; }
+    .stat span { display: block; color: #c5d0ed; font-size: 9px; letter-spacing: .16em; text-transform: uppercase; }
+    .stat b { display: block; margin-top: 2px; color: var(--gold); font-variant-numeric: tabular-nums; font-size: 21px; }
+    .stat:nth-child(2) b { color: var(--lilac); } .stat:nth-child(3) b { color: var(--mint); }
+    .bottom { position: fixed; inset: auto 0 20px; display: flex; justify-content: space-between; align-items: end; padding: 0 28px; pointer-events: none; }
+    .health-wrap { width: min(270px, 35vw); padding: 11px 14px 13px; border: 2px solid #e5ddff6e; border-radius: 16px; background: #171b3bd9; box-shadow: 0 5px 0 #10132b, 0 10px 30px #10132b70; backdrop-filter: blur(7px); }
+    .health-label { display: flex; justify-content: space-between; margin-bottom: 7px; color: #d7def4; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+    .health-label b { color: var(--mint); font-size: 13px; }
+    .health-track { height: 11px; overflow: hidden; border: 2px solid #080d25; border-radius: 99px; background: #090d25; }
+    #healthbar { height: 100%; width: 100%; border-radius: inherit; background: linear-gradient(90deg, #74e6c0, #e2f77f); transition: width .15s, background .2s; box-shadow: 0 0 14px #8af2d080; }
+    .weapon { padding: 9px 13px; border: 2px solid #ffb679; border-radius: 14px; background: #171b3bd9; color: #ffd7b0; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; text-align: right; box-shadow: 0 5px 0 #10132b, 0 10px 30px #10132b70; backdrop-filter: blur(7px); }
+    .weapon strong { display: block; margin-top: 3px; color: white; font-size: 18px; letter-spacing: -.02em; }
+    .hint { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 8px 13px; border: 1px solid #eee7ff55; border-radius: 99px; background: #171b3bc9; color: #e4e8fb; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; box-shadow: 0 4px 18px #10132b70; white-space: nowrap; }
+    .overlay { position: fixed; z-index: 5; inset: 0; display: grid; place-items: center; padding: 20px; background: radial-gradient(ellipse at 50% 38%, #504d8290 0%, #11142fe8 76%); backdrop-filter: blur(10px) saturate(.8); }
+    .panel { position: relative; width: min(570px, 100%); overflow: hidden; padding: 35px; border: 2px solid #ded8ffb8; border-radius: 28px; background: linear-gradient(150deg, #272b58fa, #171a3dfa 76%); box-shadow: 0 10px 0 #0e1127, 0 30px 100px #080a20c7, inset 0 1px #fff2; text-align: center; }
+    .panel::before { position: absolute; content: ""; top: 0; left: 8%; right: 8%; height: 4px; border-radius: 0 0 99px 99px; background: linear-gradient(90deg, var(--mint), var(--lilac), var(--coral), var(--gold)); box-shadow: 0 0 22px #c3aaff90; }
+    .menu-mark { display: grid; place-items: center; width: 54px; height: 54px; margin: 0 auto 14px; border: 2px solid #ffe7a5; border-radius: 18px; transform: rotate(-5deg); background: linear-gradient(145deg,#ffd878,#ff9f76); color: #303052; font-size: 27px; box-shadow: 0 5px 0 #ad5f69, 0 10px 25px #ffae7c3d; }
+    .eyebrow { color: var(--mint); font-weight: 900; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; }
+    h1 { margin: 10px 0 12px; color: #fff8e9; font-size: clamp(31px, 8vw, 46px); line-height: 1; letter-spacing: -.055em; text-shadow: 0 3px 0 #3e3c6c; text-wrap: balance; }
+    .desc { max-width: 375px; min-height: 44px; margin: 0 auto 19px; color: #d0d6f1; font-size: 14px; line-height: 1.55; text-wrap: pretty; }
+    .menu-status { margin: 0 auto 17px; padding: 10px 12px; border: 1px solid #bdb1ff60; border-radius: 12px; background: #11152fc7; color: #d7d9f3; font-size: 11px; letter-spacing: .055em; }
+    .menu-status strong { color: var(--gold); font-variant-numeric: tabular-nums; }
+    .map-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0 0 17px; }
+    .map-choice { display: grid; min-width: 0; gap: 7px; padding: 8px; border: 1px solid #aaa8d480; border-radius: 15px; background: #11152fc7; color: #e9e9fb; text-align: left; text-transform: none; box-shadow: inset 0 1px #fff1; }
+    .map-choice:hover { border-color: #d6d1ff; background: #202448; box-shadow: inset 0 1px #fff2, 0 5px 18px #080b2166; }
+    .map-choice[aria-pressed="true"] { border-color: var(--mint); box-shadow: inset 0 0 0 1px #8af2d050, 0 0 18px #8af2d020; }
+    .map-art { position: relative; display: block; height: 66px; overflow: hidden; border: 1px solid #ffffff1c; border-radius: 9px; background: linear-gradient(180deg,#7b83a4 0%,#f2b59e 66%,#38435b 67%,#202943 100%); }
+    .map-art::before { position: absolute; inset: 44% -10% -10%; content: ""; transform: perspective(70px) rotateX(28deg); background: repeating-linear-gradient(90deg,transparent 0 26px,#fff2d020 27px 29px), linear-gradient(180deg,#788ba1,#29364e); }
+    .map-art.classic { background: radial-gradient(circle at 76% 28%,#fff0bd 0 6px,#fff0bd00 7px), linear-gradient(180deg,#39375e 0%,#d394a6 64%,#a4b9d8 65%,#536287 100%); }
+    .map-art.classic::before { inset: 57% -10% -30%; transform: perspective(85px) rotateX(35deg); background: repeating-linear-gradient(90deg,transparent 0 32px,#fff1cf42 33px 35px), linear-gradient(180deg,#dce8f2,#7188ad); }
+    .map-art.city::after { position: absolute; inset: 13% 0 33%; content: ""; opacity: .9; background: linear-gradient(90deg,transparent 0 4%,#213148 4% 13%,transparent 13% 17%,#26364d 17% 30%,transparent 30% 35%,#17253d 35% 48%,transparent 48% 52%,#293950 52% 67%,transparent 67% 72%,#182840 72% 86%,transparent 86% 90%,#29384d 90%); clip-path: polygon(0 34%,8% 34%,8% 4%,20% 4%,20% 24%,37% 24%,37% 0,48% 0,48% 37%,62% 37%,62% 12%,76% 12%,76% 30%,91% 30%,91% 6%,100% 6%,100% 100%,0 100%); }
+    .map-copy { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 1px 3px 2px; }
+    .map-copy strong { color: #fff8e9; font-size: 11px; letter-spacing: .02em; }
+    .map-copy small { color: #bfc9e4; font-size: 9px; text-align: right; }
+    .keys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 23px; color: #d2d8f0; font-size: 11px; text-align: left; }
+    .keys span { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #b9b4e953; border-radius: 10px; background: #151937; box-shadow: inset 0 1px #fff1; }
+    .keys b { color: var(--gold); font-size: 10px; font-weight: 900; letter-spacing: .04em; }
+    .menu-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+    .online-setup { display: grid; gap: 10px; margin: 18px 0 8px; text-align: left; }
+    .online-setup label { display: grid; gap: 6px; color: #d0d6f1; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .online-setup input { width: 100%; padding: 13px; border: 2px solid #bdb1ff65; border-radius: 11px; outline: none; background: #11152fd9; color: #fff8e9; font: inherit; font-size: 14px; letter-spacing: .04em; }
+    .online-setup input:focus { border-color: var(--mint); box-shadow: 0 0 0 3px #8af2d02b; }
+    .online-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .online-row button { flex: 1 1 170px; }
+    .room-code { padding: 13px; border: 2px dashed #ffb679; border-radius: 13px; background: #11152fc9; color: var(--gold); font-size: 28px; font-weight: 900; letter-spacing: .24em; text-align: center; }
+    .online-note { margin: 0; color: #d0d6f1; font-size: 12px; line-height: 1.5; text-align: center; }
+    button:disabled { cursor: wait; filter: saturate(.45); opacity: .55; transform: none; box-shadow: none; }
+    button { min-width: 175px; padding: 14px 20px; border: 2px solid #ffe7a5; border-radius: 13px; background: linear-gradient(100deg, #ffd878, #ff9d70); color: #292747; font: inherit; font-size: 11px; font-weight: 1000; letter-spacing: .09em; text-transform: uppercase; cursor: pointer; box-shadow: 0 5px 0 #a95468, 0 10px 24px #ff9b7138; transition: transform .15s, filter .15s, box-shadow .15s; }
+    button:hover { filter: brightness(1.08); transform: translateY(-2px); box-shadow: 0 7px 0 #a95468, 0 13px 26px #ff9b7145; }
+    button:active { transform: translateY(2px); box-shadow: 0 2px 0 #a95468; }
+    button:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
+    button.secondary { border-color: #a9a2e7; background: #35385f; color: #f1edff; box-shadow: 0 5px 0 #11142d; }
+    button.secondary:hover { background: #454776; box-shadow: 0 7px 0 #11142d; }
+    .footnote { margin-top: 15px; color: #b5bddf; font-size: 10px; letter-spacing: .07em; }
+    .hidden { display: none !important; }
+    #damage { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, #ff7d6870, #e6305d55); opacity: 0; transition: opacity .18s; }
+    #damage.flash { opacity: 1; }
+    @media (max-width: 540px) {
+      .topbar { padding: 14px; } .brand { font-size: 8px; } .brand strong { font-size: 17px; }
+      .stats { gap: 5px; } .stat { min-width: 56px; padding: 7px 6px; border-radius: 11px; } .stat b { font-size: 16px; } .stat span { font-size: 7px; }
+      .bottom { padding: 0 14px; bottom: 17px; } .health-wrap { padding: 8px 10px 10px; } .hint { top: 72px; bottom: auto; max-width: calc(100vw - 30px); overflow: hidden; font-size: 8px; }
+      .weapon { padding: 7px 9px; font-size: 8px; } .weapon strong { font-size: 14px; }
+      .panel { max-height: calc(100vh - 28px); overflow-y: auto; padding: 28px 19px 24px; border-radius: 22px; } .keys { font-size: 10px; gap: 6px; } .keys span { padding: 7px 8px; } .map-picker { gap: 7px; } .map-art { height: 54px; } .map-choice { padding: 6px; }
+      .menu-actions { display: grid; grid-template-columns: 1fr; } button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" aria-label="Pingu FPS Arena"></canvas>
+  <div class="vignette"></div>
+  <header class="topbar">
+    <div class="brand">Överlev snöstormen<strong>Pingu FPS Arena</strong></div>
+    <div class="stats">
+      <div class="stat"><span>Poäng</span><b id="score">0000</b></div>
+      <div class="stat"><span>Våg</span><b id="wave">1</b></div>
+      <div class="stat"><span>Kvar</span><b id="left">0</b></div>
+    </div>
+  </header>
+  <div class="bottom">
+    <div class="health-wrap"><div class="health-label"><span>Hälsa</span><b id="health">100</b></div><div class="health-track"><div id="healthbar"></div></div></div>
+    <div class="weapon">Pingu-vapen<strong>Snöbollskastare</strong></div>
+  </div>
+  <div class="hint" id="aiHint">WASD förflyttning · Musen siktar åt alla håll · Klicka för att kasta</div>
+  <div id="damage"></div>
+  <section class="overlay" id="overlay" aria-labelledby="title" aria-live="polite">
+    <div class="panel" id="menuPanel" data-mode="start">
+      <div class="menu-mark" aria-hidden="true">❄</div>
+      <div class="eyebrow" id="menuEyebrow">Pingu FPS Arena · Överlev snöstormen</div>
+      <h1 id="title">Redo för snöbollskrig?</h1>
+      <p class="desc" id="description">Överlev så många vågor du kan. Sikta med musen och kasta snöbollar innan pingvinerna hinner fram. Botarna lär sig hur du rör dig.</p>
+      <div class="menu-status" id="menuStatus">En arena. Oändliga vågor. Hur länge klarar du dig?</div>
+      <div class="map-picker" id="mapPicker" role="group" aria-label="Välj karta">
+        <button class="map-choice" type="button" data-map="classic" aria-pressed="true" aria-label="Välj klassiska isarenan">
+          <span class="map-art classic" aria-hidden="true"></span><span class="map-copy"><strong>Isarenan</strong><small>Klassisk</small></span>
+        </button>
+        <button class="map-choice" type="button" data-map="city" aria-pressed="false" aria-label="Välj Mörkerstad">
+          <span class="map-art city" aria-hidden="true"></span><span class="map-copy"><strong>Mörkerstad</strong><small>Ny karta</small></span>
+        </button>
+      </div>
+      <div class="keys" aria-label="Kontroller">
+         <span><b>W A S D</b> Gå och sidsteg</span><span><b>Mus</b> Sikta upp/ned och åt sidorna</span>
+        <span><b>Vänsterklick</b> Kasta</span><span><b>Shift</b> Spring</span>
+         <span><b>1–3</b> Välj föremål</span><span><b>E</b> Använd föremål</span>
+         <span><b>Esc</b> Pausa</span><span><b>P</b> Pausa</span>
+      </div>
+      <div class="menu-actions">
+        <button id="start" type="button">Starta spelet</button>
+        <button id="openOnline" class="secondary" type="button">Spela online</button>
+        <button id="menuSecondary" class="secondary hidden" type="button">Till titelmenyn</button>
+      </div>
+      <div id="onlineSetup" class="online-setup hidden">
+        <label for="playerName">Ditt namn<input id="playerName" maxlength="18" autocomplete="nickname" placeholder="Pingvin" value="Pingvin"></label>
+        <div class="online-row"><button id="createRoom" type="button">Skapa rum</button></div>
+        <label for="roomCodeInput">Rumskod<input id="roomCodeInput" maxlength="6" autocomplete="off" placeholder="A1B2C3" autocapitalize="characters"></label>
+        <div class="online-row"><button id="joinRoom" type="button">Gå med i rum</button></div>
+        <p id="onlineMessage" class="online-note" aria-live="polite">Spela med upp till tre vänner. Skapa ett rum och dela inbjudningslänken.</p>
+      </div>
+      <div id="onlineLobby" class="online-setup hidden">
+        <p id="roomCodeLabel" class="online-note">Rumskod</p>
+        <div id="roomCodeDisplay" class="room-code">------</div>
+        <p id="onlineLobbyStatus" class="online-note" aria-live="polite"></p>
+        <div class="online-row"><button id="copyRoom" class="secondary" type="button">Kopiera inbjudningslänk</button></div>
+      </div>
+      <div class="footnote" id="menuFootnote">Klicka på startknappen för att börja</div>
+    </div>
+  </section>
+<script src="./inventory.js"></script>
+<script>
+(() => {
+  'use strict';
+  const canvas = document.querySelector('#game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const $ = (s) => document.querySelector(s);
+  const ui = { score: $('#score'), wave: $('#wave'), left: $('#left'), leftLabel: $('.stat:last-child span'), waveLabel: $('.stat:nth-child(2) span'), health: $('#health'), healthbar: $('#healthbar'), overlay: $('#overlay'), panel: $('#menuPanel'), eyebrow: $('#menuEyebrow'), title: $('#title'), description: $('#description'), status: $('#menuStatus'), footnote: $('#menuFootnote'), start: $('#start'), openOnline: $('#openOnline'), secondary: $('#menuSecondary'), mapPicker: $('#mapPicker'), onlineSetup: $('#onlineSetup'), onlineLobby: $('#onlineLobby'), playerName: $('#playerName'), roomCodeInput: $('#roomCodeInput'), onlineMessage: $('#onlineMessage'), roomCodeDisplay: $('#roomCodeDisplay'), onlineLobbyStatus: $('#onlineLobbyStatus'), copyRoom: $('#copyRoom'), createRoom: $('#createRoom'), joinRoom: $('#joinRoom'), damage: $('#damage'), aiHint: $('#aiHint') };
+  const CLASSIC_MAP = [
+    '################',
+    '#..............#',
+    '#..##.....##...#',
+    '#..#.......#...#',
+    '#..............#',
+    '#....##........#',
+    '#........##....#',
+    '#..............#',
+    '#...##.........#',
+    '#......##......#',
+    '#..............#',
+    '#.........#....#',
+    '#.........#....#',
+    '#...##.........#',
+    '#..............#',
+    '################'
+  ];
+  const CITY_MAP = [
+    '################',
+    '#...##....##...#',
+    '#...##....##...#',
+    '#...##....##...#',
+    '#..............#',
+    '#..............#',
+    '#...##....##...#',
+    '#...##....##...#',
+    '#...##....##...#',
+    '#...##....##...#',
+    '#..............#',
+    '#..............#',
+    '#...##....##...#',
+    '#...##....##...#',
+    '#...##....##...#',
+    '################'
+  ];
+  const MAPS = {
+    classic: { grid: CLASSIC_MAP, soloSpawn: [7.5, 7.5], spawns: [[2.5, 2.5], [13.5, 13.5], [13.5, 2.5], [2.5, 13.5]] },
+    city: { grid: CITY_MAP, soloSpawn: [4.5, 4.5], spawns: [[4.5, 4.5], [10.5, 10.5], [10.5, 4.5], [4.5, 10.5]] }
+  };
+  let selectedMapId = 'classic';
+  let MAP = MAPS[selectedMapId].grid;
+  function selectMap(mapId) {
+    if (!Object.prototype.hasOwnProperty.call(MAPS, mapId)) return;
+    selectedMapId = mapId; MAP = MAPS[mapId].grid;
+    for (const button of ui.mapPicker.querySelectorAll('[data-map]')) button.setAttribute('aria-pressed', String(button.dataset.map === mapId));
+  }
+  const FOV = Math.PI / 3;
+  const MAX_ACTIVE_NETWORK_PROJECTILES = 64;
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  function loadBotLearning() {
+    const fresh = { strafeBias: 0, velocityX: 0, velocityY: 0, aimSkill: .36, shotsFired: 0, shotsHit: 0, playerShots: 0, playerHits: 0, saveTimer: 0, hintTimer: 0 };
+    try {
+      const saved = JSON.parse(localStorage.getItem('pingu-fps-bot-learning-v1') || 'null');
+      if (saved && typeof saved === 'object') {
+        fresh.strafeBias = clamp(Number(saved.strafeBias) || 0, -1, 1);
+        fresh.aimSkill = clamp(Number(saved.aimSkill) || fresh.aimSkill, .2, .84);
+        fresh.shotsFired = Math.max(0, Math.floor(Number(saved.shotsFired) || 0));
+        fresh.shotsHit = Math.max(0, Math.floor(Number(saved.shotsHit) || 0));
+        fresh.playerShots = Math.max(0, Math.floor(Number(saved.playerShots) || 0));
+        fresh.playerHits = Math.max(0, Math.floor(Number(saved.playerHits) || 0));
+      }
+    } catch { /* Local files and private browsing may block storage. */ }
+    return fresh;
+  }
+  const botLearning = loadBotLearning();
+  function saveBotLearning() {
+    try {
+      localStorage.setItem('pingu-fps-bot-learning-v1', JSON.stringify({ strafeBias: botLearning.strafeBias, aimSkill: botLearning.aimSkill, shotsFired: botLearning.shotsFired, shotsHit: botLearning.shotsHit, playerShots: botLearning.playerShots, playerHits: botLearning.playerHits }));
+    } catch { /* Keep the adaptive bots working when storage is unavailable. */ }
+  }
+  window.addEventListener('beforeunload', saveBotLearning);
+  function recordBotShot(ball, hit) {
+    if (ball.learningRecorded) return;
+    ball.learningRecorded = true;
+    botLearning.shotsFired++;
+    if (hit) botLearning.shotsHit++;
+    // Hits reward the aim model; misses relax it so dodging remains effective.
+    botLearning.aimSkill = clamp(botLearning.aimSkill + (hit ? .045 : -.012), .2, .84);
+  }
+  const keys = new Set();
+  const player = { x: 7.5, y: 7.5, angle: -Math.PI / 2, health: 100, score: 0, wave: 1, shot: 0, hurt: 0, rapid: 0, shield: 0 };
+  let enemies = [], started = false, paused = false, lastTime = 0, lastMouseX = null, lastMouseY = null, cameraPitch = 0, zBuffer = [], columns = 0, width = 0, height = 0, dpr = 1;
+  let floorCanvas = document.createElement('canvas'), floorCtx = floorCanvas.getContext('2d'), floorImage, floorW = 0, floorH = 0;
+  let floorRayX = new Float32Array(0), floorRayY = new Float32Array(0), floorRayLength = new Float32Array(0);
+  let snow = [], shotFlash = 0, recoil = 0, intro = true;
+  let projectiles = [], impacts = [], enemyDefeats = 0, waveBreak = 0, waveBanner = 0, waveBannerText = '';
+  const network = { active: false, host: false, peer: null, peerLibraryPromise: null, id: '', roomCode: '', name: 'Pingvin', slot: 0, connections: new Map(), remotes: new Map(), lastSend: 0, shotCount: 0, matchEnded: false, hitEvents: new Set() };
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    width = Math.max(1, Math.floor(innerWidth * dpr)); height = Math.max(1, Math.floor(innerHeight * dpr));
+    canvas.width = width; canvas.height = height;
+    columns = Math.max(320, Math.min(2200, Math.floor(width * .86)));
+    zBuffer = new Float32Array(columns);
+    floorW = Math.max(240, Math.min(900, Math.floor(width * .62)));
+    floorH = Math.max(160, Math.min(500, Math.floor(height * .55)));
+    floorCanvas.width = floorW; floorCanvas.height = floorH;
+    floorImage = floorCtx.createImageData(floorW, floorH);
+    floorRayX = new Float32Array(floorW); floorRayY = new Float32Array(floorW); floorRayLength = new Float32Array(floorW);
+    snow = Array.from({ length: 85 }, () => ({ x: Math.random() * width, y: Math.random() * height, r: (1 + Math.random() * 2) * dpr, v: (16 + Math.random() * 38) * dpr }));
+  }
+  window.addEventListener('resize', resize); resize();
+
+  function playerSpawn(slot) {
+    const spawns = MAPS[selectedMapId].spawns;
+    const [x, y] = spawns[normalizePlayerSlot(slot)];
+    const [centerX, centerY] = MAPS[selectedMapId].soloSpawn;
+    return { x, y, angle: Math.atan2(centerY - y, centerX - x) };
+  }
+  function normalizePlayerSlot(slot, fallback = 0) {
+    const valid = value => Number.isInteger(value) && value >= 0 && value < 4;
+    return valid(slot) ? slot : valid(fallback) ? fallback : 0;
+  }
+  function cleanPlayerName(value) {
+    return String(value || '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, 18) || 'Pingvin';
+  }
+  function currentPlayerState(id = network.id) {
+    return { id, name: network.name, slot: network.slot, x: player.x, y: player.y, angle: player.angle, health: player.health, score: player.score };
+  }
+  function remoteFromState(state) {
+    if (!state || typeof state.id !== 'string' || state.id === network.id) return null;
+    const old = network.remotes.get(state.id);
+    const x = Number.isFinite(state.x) ? Math.max(1.2, Math.min(14.8, state.x)) : old?.tx ?? 7.5;
+    const y = Number.isFinite(state.y) ? Math.max(1.2, Math.min(14.8, state.y)) : old?.ty ?? 7.5;
+    const remote = old || { id: state.id, x, y, tx: x, ty: y, angle: 0, targetAngle: 0, health: 100, score: 0, slot: 1, wobble: Math.random() * Math.PI * 2, flash: 0, hitRadius: .32, hitHeight: .80, role: 'runner', name: 'Pingvin' };
+    if (!wallAt(x, y)) { remote.tx = x; remote.ty = y; }
+    remote.name = cleanPlayerName(state.name || remote.name);
+    remote.slot = normalizePlayerSlot(state.slot, remote.slot);
+    remote.targetAngle = Number.isFinite(state.angle) ? state.angle : remote.targetAngle;
+    remote.health = Number.isFinite(state.health) ? Math.max(0, Math.min(100, state.health)) : remote.health;
+    remote.hp = remote.health; remote.maxHp = 100;
+    remote.score = Number.isFinite(state.score) ? Math.max(0, state.score) : remote.score;
+    network.remotes.set(state.id, remote);
+    return remote;
+  }
+  function isValidNetworkShot(message) {
+    if (typeof message.id !== 'string' || message.id.length > 128) return false;
+    const ball = message.ball;
+    if (!ball || typeof ball !== 'object') return false;
+    return [ball.x, ball.y, ball.z, ball.vx, ball.vy, ball.vz, ball.gravity, ball.radius, ball.maxAge].every(Number.isFinite)
+      && ball.x >= 0 && ball.x < MAP[0].length && ball.y >= 0 && ball.y < MAP.length
+      && ball.z >= -1 && ball.z <= 3
+      && Math.hypot(ball.vx, ball.vy) <= 20 && Math.abs(ball.vz) <= 20
+      && ball.gravity >= 0 && ball.gravity <= 10
+      && ball.radius > 0 && ball.radius <= .1
+      && ball.maxAge > 0 && ball.maxAge <= 2;
+  }
+  function canAcceptNetworkShot(message, ownerId, activeProjectileCount) {
+    return typeof ownerId === 'string' && ownerId.length > 0
+      && activeProjectileCount < MAX_ACTIVE_NETWORK_PROJECTILES
+      && isValidNetworkShot(message);
+  }
+  function getWelcomeRoster(message) {
+    return Array.isArray(message?.roster) ? message.roster.slice(0, 3) : [];
+  }
+  function updateLobby() {
+    const count = network.remotes.size + 1;
+    ui.roomCodeDisplay.textContent = network.roomCode.toUpperCase() || '------';
+    ui.onlineLobbyStatus.textContent = network.host
+      ? (network.remotes.size ? `${count} spelare anslutna. Du kan starta matchen.` : (window.location.protocol === 'https:' ? 'Väntar på vänner. Kopiera inbjudningslänken och skicka den.' : 'Publicera spelet på HTTPS för att kunna dela en fungerande inbjudningslänk.'))
+      : 'Du är med i rummet. Väntar på att värden startar matchen.';
+    ui.start.disabled = !network.host || network.remotes.size === 0;
+    if (network.host && ui.panel.dataset.mode === 'lobby-host') ui.start.textContent = 'Starta matchen';
+    if (!network.host && ui.panel.dataset.mode === 'lobby-guest') ui.start.textContent = 'Väntar på värden';
+  }
+  function sendToConnection(connection, packet) {
+    if (connection?.open) connection.send(packet);
+  }
+  function sendNetwork(packet) {
+    if (!network.active) return;
+    if (network.host) {
+      const message = { ...packet, from: network.id };
+      for (const connection of network.connections.values()) sendToConnection(connection, message);
+    } else {
+      const hostConnection = network.connections.get('host');
+      sendToConnection(hostConnection, packet);
+    }
+  }
+  function broadcastHost(packet, exceptId = '') {
+    const message = { ...packet, from: network.id };
+    for (const [id, connection] of network.connections) if (id !== exceptId) sendToConnection(connection, message);
+  }
+  function handleNetworkMessage(message, fromId = '') {
+    if (!message || typeof message !== 'object') return;
+    if (message.type === 'welcome' && !network.host) {
+      network.slot = normalizePlayerSlot(message.slot, 1);
+      network.roomCode = String(message.roomCode || network.roomCode).toUpperCase();
+      network.remotes.clear();
+      for (const state of getWelcomeRoster(message)) remoteFromState(state);
+      showOverlay('lobby-guest'); updateLobby();
+    } else if (message.type === 'player-joined') {
+      remoteFromState(message.player);
+      updateLobby();
+    } else if (message.type === 'state') {
+      remoteFromState({ ...message, id: fromId || message.from });
+    } else if (message.type === 'leave') {
+      network.remotes.delete(fromId || message.from);
+      updateLobby();
+    } else if (message.type === 'shot' && canAcceptNetworkShot(message, fromId || message.from, projectiles.length)) {
+      const ball = message.ball;
+      projectiles.push({ ...ball, id: message.id, ownerId: fromId || message.from, prevX: ball.x, prevY: ball.y, prevZ: ball.z, age: 0, hitReported: false });
+    } else if (message.type === 'hit') {
+      const eventId = String(message.shotId || '');
+      if (eventId && !network.hitEvents.has(eventId)) {
+        network.hitEvents.add(eventId);
+        if (network.hitEvents.size > 128) network.hitEvents.delete(network.hitEvents.values().next().value);
+        const target = network.remotes.get(message.targetId);
+        if (target && Number.isFinite(message.health)) target.health = Math.max(0, Math.min(100, message.health));
+        if (message.shooterId === network.id && message.targetId !== network.id) { player.score += 100; updateHud(); }
+      }
+    } else if (message.type === 'match-start' && !network.host) {
+      selectMap(message.mapId);
+      network.matchEnded = false;
+      resetGame(); paused = true; showOverlay('online-ready');
+    } else if (message.type === 'match-end') {
+      network.matchEnded = true; paused = true;
+      document.exitPointerLock?.(); showOverlay('over');
+    } else if (message.type === 'reject') {
+      failNetwork(message.reason || 'Rummet är fullt eller så kunde anslutningen inte godkännas.');
+    }
+  }
+  function allocateSlot() {
+    const used = new Set([network.slot, ...Array.from(network.remotes.values(), remote => remote.slot)]);
+    for (let slot = 0; slot < 4; slot++) if (!used.has(slot)) return slot;
+    return -1;
+  }
+  function attachHostConnection(connection) {
+    connection.on('data', message => {
+      if (!message || typeof message !== 'object') return;
+      if (message.type === 'join') {
+        if (network.remotes.has(connection.peer)) return;
+        if (started && !network.matchEnded) { sendToConnection(connection, { type: 'reject', reason: 'Matchen har redan börjat. Be värden bjuda in dig till nästa match.' }); setTimeout(() => connection.close(), 250); return; }
+        const slot = allocateSlot();
+        if (slot < 0) { sendToConnection(connection, { type: 'reject', reason: 'Rummet är fullt. Det får plats fyra spelare.' }); setTimeout(() => connection.close(), 250); return; }
+        const remote = remoteFromState({ id: connection.peer, name: cleanPlayerName(message.name), slot, ...playerSpawn(slot), health: 100, score: 0 });
+        network.connections.set(connection.peer, connection);
+        const roster = [currentPlayerState(), ...Array.from(network.remotes.values()).filter(item => item.id !== connection.peer).map(item => ({ id: item.id, name: item.name, slot: item.slot, x: item.x, y: item.y, angle: item.angle, health: item.health, score: item.score }))];
+        sendToConnection(connection, { type: 'welcome', slot, roomCode: network.roomCode, roster });
+        broadcastHost({ type: 'player-joined', player: { id: remote.id, name: remote.name, slot: remote.slot, ...playerSpawn(slot), health: 100, score: 0 } }, connection.peer);
+        updateLobby();
+        return;
+      }
+      if (!network.remotes.has(connection.peer) || !['state', 'shot', 'hit', 'leave'].includes(message.type)) return;
+      handleNetworkMessage(message, connection.peer);
+      const relay = { ...message, from: connection.peer };
+      for (const [id, other] of network.connections) if (id !== connection.peer) sendToConnection(other, relay);
+      if (message.type === 'leave') {
+        network.remotes.delete(connection.peer); network.connections.delete(connection.peer); updateLobby();
+      }
+    });
+    connection.on('close', () => {
+      if (!network.remotes.has(connection.peer)) return;
+      network.remotes.delete(connection.peer); network.connections.delete(connection.peer);
+      broadcastHost({ type: 'leave' }); updateLobby();
+    });
+    connection.on('error', () => {});
+  }
+  function failNetwork(message) {
+    ui.onlineMessage.textContent = message;
+    if (network.peer && !network.peer.destroyed) network.peer.destroy();
+    network.active = false; network.host = false; network.peer = null; network.id = ''; network.connections.clear(); network.remotes.clear(); network.hitEvents.clear();
+    showOverlay('online-error');
+  }
+  function roomInviteUrl(code) {
+    if (window.location.protocol !== 'https:') return '';
+    const invite = new URL(window.location.href);
+    invite.search = '';
+    invite.hash = '';
+    invite.searchParams.set('room', code.toUpperCase());
+    return invite.href;
+  }
+  function setRoomInviteUrl(code) {
+    const inviteUrl = roomInviteUrl(code);
+    if (!inviteUrl) return '';
+    try { window.history.replaceState(window.history.state, '', inviteUrl); } catch { /* Sharing still works through the copy button. */ }
+    return inviteUrl;
+  }
+  function loadPeerLibrary() {
+    if (typeof window.Peer === 'function') return Promise.resolve();
+    if (network.peerLibraryPromise) return network.peerLibraryPromise;
+    network.peerLibraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js';
+      script.onload = () => typeof window.Peer === 'function' ? resolve() : reject(new Error('PeerJS saknas'));
+      script.onerror = () => reject(new Error('PeerJS kunde inte laddas'));
+      document.head.appendChild(script);
+    });
+    return network.peerLibraryPromise;
+  }
+  function beginOnline(create, code = '') {
+    network.active = true; network.host = create; network.name = cleanPlayerName(ui.playerName.value); network.roomCode = code.toUpperCase(); network.slot = create ? 0 : 1; network.id = ''; network.remotes.clear(); network.connections.clear(); network.matchEnded = false;
+    ui.createRoom.disabled = true; ui.joinRoom.disabled = true;
+    ui.onlineMessage.textContent = create ? 'Laddar nätverksanslutningen och skapar rum …' : 'Laddar nätverksanslutningen och ansluter …';
+    loadPeerLibrary().then(() => {
+      if (!network.active) return;
+      try {
+        network.peer = create ? new window.Peer(`pingu-${code.toLowerCase()}`) : new window.Peer();
+        network.peer.on('open', id => {
+          network.id = id;
+          if (create) {
+            showOverlay('lobby-host'); updateLobby();
+          } else {
+            const connection = network.peer.connect(`pingu-${code.toLowerCase()}`, { reliable: true });
+            network.connections.set('host', connection);
+            connection.on('open', () => sendToConnection(connection, { type: 'join', name: network.name }));
+            connection.on('data', message => handleNetworkMessage(message, message?.from || ''));
+            connection.on('close', () => { if (network.active) failNetwork('Anslutningen till värden bröts.'); });
+            connection.on('error', () => failNetwork('Det gick inte att ansluta. Kontrollera rumskoden och försök igen.'));
+          }
+        });
+        if (create) network.peer.on('connection', attachHostConnection);
+        network.peer.on('error', error => failNetwork(error?.type === 'unavailable-id' ? 'Rumskoden används redan. Försök skapa ett nytt rum.' : 'Nätverksanslutningen misslyckades. Kontrollera internetanslutningen och försök igen.'));
+      } catch {
+        failNetwork('Rummet kunde inte skapas. Kontrollera internetanslutningen och försök igen.');
+      }
+    }).catch(() => {
+      network.peerLibraryPromise = null;
+      failNetwork('Nätverksbiblioteket kunde inte laddas. Kontrollera internetanslutningen och försök igen.');
+    });
+  }
+  function leaveOnline() {
+    if (!network.active) return;
+    sendNetwork({ type: 'leave' });
+    for (const connection of network.connections.values()) connection.close();
+    if (network.peer && !network.peer.destroyed) network.peer.destroy();
+    network.active = false; network.host = false; network.peer = null; network.connections.clear(); network.remotes.clear(); network.id = ''; network.roomCode = ''; network.hitEvents.clear();
+    ui.leftLabel.textContent = 'Kvar'; ui.waveLabel.textContent = 'Våg';
+  }
+  function startOnlineMatch() {
+    if (!network.host || network.remotes.size === 0) return;
+    sendNetwork({ type: 'match-start', mapId: selectedMapId });
+    network.matchEnded = false; network.hitEvents.clear();
+    resetGame(); activateGame();
+  }
+  function publishPlayerState(now) {
+    if (!network.active || now - network.lastSend < 55) return;
+    network.lastSend = now;
+    sendNetwork({ type: 'state', ...currentPlayerState() });
+  }
+  function checkOnlineWinner() {
+    if (!network.active || !network.host || network.matchEnded || !started || network.remotes.size === 0) return;
+    const alive = (player.health > 0 ? 1 : 0) + Array.from(network.remotes.values()).filter(remote => remote.health > 0).length;
+    if (alive <= 1) {
+      network.matchEnded = true; paused = true; sendNetwork({ type: 'match-end' }); showOverlay('over');
+    }
+  }
+
+  function wallAt(x, y) {
+    const mx = Math.floor(x), my = Math.floor(y);
+    return my < 0 || my >= MAP.length || mx < 0 || mx >= MAP[0].length || MAP[my][mx] === '#';
+  }
+  function hasLineOfSight(x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1, distance = Math.hypot(dx, dy);
+    const steps = Math.ceil(distance / .1);
+    for (let step = 1; step < steps; step++) if (wallAt(x1 + dx * step / steps, y1 + dy * step / steps)) return false;
+    return true;
+  }
+  function circleCanOccupy(x, y, radius) {
+    const minX = Math.floor(x - radius), maxX = Math.floor(x + radius);
+    const minY = Math.floor(y - radius), maxY = Math.floor(y + radius);
+    for (let my = minY; my <= maxY; my++) for (let mx = minX; mx <= maxX; mx++) {
+      if (!wallAt(mx + .5, my + .5)) continue;
+      const closestX = Math.max(mx, Math.min(x, mx + 1));
+      const closestY = Math.max(my, Math.min(y, my + 1));
+      const dx = x - closestX, dy = y - closestY;
+      if (dx * dx + dy * dy < radius * radius - 1e-8) return false;
+    }
+    return true;
+  }
+  function moveCircle(obj, dx, dy, radius = .2) {
+    const distance = Math.hypot(dx, dy);
+    const stepSize = Math.max(.025, Math.min(.09, radius * .22));
+    const steps = Math.max(1, Math.ceil(distance / stepSize));
+    const stepX = dx / steps, stepY = dy / steps;
+    for (let i = 0; i < steps; i++) {
+      const nextX = obj.x + stepX;
+      if (circleCanOccupy(nextX, obj.y, radius)) obj.x = nextX;
+      const nextY = obj.y + stepY;
+      if (circleCanOccupy(obj.x, nextY, radius)) obj.y = nextY;
+    }
+  }
+  function castRay(angle) {
+    const dx = Math.cos(angle), dy = Math.sin(angle);
+    let mx = Math.floor(player.x), my = Math.floor(player.y);
+    const deltaX = Math.abs(1 / (dx || 1e-9)), deltaY = Math.abs(1 / (dy || 1e-9));
+    const stepX = dx < 0 ? -1 : 1, stepY = dy < 0 ? -1 : 1;
+    let sideX = (dx < 0 ? player.x - mx : mx + 1 - player.x) * deltaX;
+    let sideY = (dy < 0 ? player.y - my : my + 1 - player.y) * deltaY;
+    let side = 0, distance = 0, guard = 0;
+    while (guard++ < 50) {
+      if (sideX < sideY) { sideX += deltaX; mx += stepX; side = 0; distance = sideX - deltaX; }
+      else { sideY += deltaY; my += stepY; side = 1; distance = sideY - deltaY; }
+      if (my < 0 || my >= MAP.length || mx < 0 || mx >= MAP[0].length || MAP[my][mx] === '#') break;
+    }
+    const safe = Math.max(.001, distance);
+    const hit = side === 0 ? player.y + safe * dy : player.x + safe * dx;
+    return { distance: safe * Math.cos(angle - player.angle), rayDistance: safe, side, tex: hit - Math.floor(hit), cellX: mx, cellY: my };
+  }
+  function makeEnemy() {
+    const collisionRadius = .32;
+    const safeSpawn = (x, y) => circleCanOccupy(x, y, collisionRadius)
+      && Math.hypot(x - player.x, y - player.y) >= 5
+      && enemies.every(e => Math.hypot(x - e.x, y - e.y) >= .84);
+    let x = 1.5, y = 1.5, foundSpawn = false;
+    for (let tries = 0; tries < 100; tries++) {
+      x = 1.5 + Math.random() * 13; y = 1.5 + Math.random() * 13;
+      if (safeSpawn(x, y)) { foundSpawn = true; break; }
+    }
+    if (!foundSpawn) {
+      x = 1.5; y = 1.5;
+      const safeFallbacks = [], openFallbacks = [];
+      for (let my = 1; my < MAP.length - 1; my++) for (let mx = 1; mx < MAP[0].length - 1; mx++) {
+        const px = mx + .5, py = my + .5;
+        if (!circleCanOccupy(px, py, collisionRadius)) continue;
+        if (safeSpawn(px, py)) safeFallbacks.push([px, py]);
+        const clearance = Math.min(Math.hypot(px - player.x, py - player.y), ...enemies.map(e => Math.hypot(px - e.x, py - e.y)));
+        openFallbacks.push({ x: px, y: py, clearance });
+      }
+      if (safeFallbacks.length) [x, y] = safeFallbacks[Math.floor(Math.random() * safeFallbacks.length)];
+      else if (openFallbacks.length) {
+        openFallbacks.sort((a, b) => b.clearance - a.clearance);
+        ({ x, y } = openFallbacks[0]);
+      }
+    }
+    const runner = player.wave >= 2 && Math.random() < .28;
+    const heavy = player.wave >= 4 && !runner && Math.random() < .2;
+    const hp = 1 + Math.floor((player.wave - 1) / 4) + (heavy ? 1 : 0);
+    const baseSpeed = .48 + Math.min(player.wave * .025, .35);
+    return {
+      x, y, hp, maxHp: hp, hitRadius: .32, collisionRadius, hitHeight: .80,
+      role: runner ? 'runner' : heavy ? 'heavy' : 'stalker',
+      speed: baseSpeed * (runner ? 1.45 : heavy ? .72 : 1) * (.9 + Math.random() * .2),
+      attack: Math.random() * .5, attackCooldown: heavy ? 1.25 : runner ? 1.05 : .9,
+      attackDamage: heavy ? 12 : runner ? 5 : 8, shotCooldown: heavy ? 1.9 : runner ? 1.35 : 1.6,
+      windup: 0, windupDuration: heavy ? .64 : runner ? .3 : .44,
+      strafeDirection: Math.random() < .5 ? -1 : 1, strafeTimer: Math.random() * 1.3, repath: 0,
+      targetCell: '', path: [], wobble: Math.random() * Math.PI * 2, flash: 0
+    };
+  }
+  function fireEnemyShot(enemy, distance) {
+    const dx = player.x - enemy.x, dy = player.y - enemy.y;
+    const speed = enemy.role === 'heavy' ? 6.8 : enemy.role === 'runner' ? 7.8 : 7.2;
+    const travelTime = Math.min(.9, distance / speed);
+    const leadTime = Math.min(.58, travelTime * (.32 + botLearning.aimSkill * .44));
+    const rightX = -Math.sin(player.angle), rightY = Math.cos(player.angle);
+    const learnedStrafe = botLearning.strafeBias * leadTime * .38;
+    let targetX = player.x + botLearning.velocityX * leadTime * (.55 + botLearning.aimSkill * .7) + rightX * learnedStrafe;
+    let targetY = player.y + botLearning.velocityY * leadTime * (.55 + botLearning.aimSkill * .7) + rightY * learnedStrafe;
+    const spread = (enemy.role === 'heavy' ? .16 : enemy.role === 'runner' ? .5 : .34) * (1.35 - botLearning.aimSkill);
+    targetX += (Math.random() - .5) * spread;
+    targetY += (Math.random() - .5) * spread;
+    const forwardX = dx / Math.max(.001, distance), forwardY = dy / Math.max(.001, distance);
+    const startX = enemy.x + forwardX * .32, startY = enemy.y + forwardY * .32;
+    const length = Math.max(.01, Math.hypot(targetX - startX, targetY - startY));
+    const flightTime = Math.max(.01, length / speed), gravity = 1.15, startZ = .58;
+    projectiles.push({
+      x: startX, y: startY, z: startZ, prevX: startX, prevY: startY, prevZ: startZ,
+      vx: (targetX - startX) / length * speed, vy: (targetY - startY) / length * speed,
+      vz: (.48 - startZ + .5 * gravity * flightTime * flightTime) / flightTime,
+      gravity, radius: .06, damage: enemy.role === 'heavy' ? 10 : enemy.role === 'runner' ? 5 : 7,
+      age: 0, maxAge: 1.5, enemyShot: true, learningRecorded: false
+    });
+  }
+  function findEnemyPath(startX, startY, targetX, targetY) {
+    const mapW = MAP[0].length, mapH = MAP.length;
+    const sx = Math.floor(startX), sy = Math.floor(startY), tx = Math.floor(targetX), ty = Math.floor(targetY);
+    if (sx === tx && sy === ty) return [];
+    const start = sy * mapW + sx, target = ty * mapW + tx;
+    const parent = new Int16Array(mapW * mapH); parent.fill(-1); parent[start] = start;
+    const queue = new Int16Array(mapW * mapH); let head = 0, tail = 0; queue[tail++] = start;
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    while (head < tail && parent[target] === -1) {
+      const cell = queue[head++], cx = cell % mapW, cy = Math.floor(cell / mapW);
+      for (const [ox, oy] of dirs) {
+        const nx = cx + ox, ny = cy + oy;
+        if (nx < 0 || ny < 0 || nx >= mapW || ny >= mapH || MAP[ny][nx] === '#') continue;
+        const next = ny * mapW + nx;
+        if (parent[next] !== -1) continue;
+        parent[next] = cell; queue[tail++] = next;
+      }
+    }
+    if (parent[target] === -1) return [];
+    const path = [];
+    for (let cell = target; cell !== start; cell = parent[cell]) path.push([cell % mapW + .5, Math.floor(cell / mapW) + .5]);
+    path.reverse(); return path;
+  }
+  function beginWave() {
+    enemies = [];
+    if (network.active) { ui.wave.textContent = '1'; ui.left.textContent = String(network.remotes.size + 1); return; }
+    waveBreak = 0; waveBanner = 1.8; waveBannerText = `VÅG ${player.wave}`;
+    for (let i = 0; i < 3 + Math.min(player.wave, 7); i++) enemies.push(makeEnemy());
+    ui.wave.textContent = player.wave;
+    ui.left.textContent = enemies.length;
+  }
+  function resetGame() {
+    const [soloX, soloY] = MAPS[selectedMapId].soloSpawn;
+    const spawn = network.active ? playerSpawn(network.slot) : { x: soloX, y: soloY, angle: -Math.PI / 2 };
+    player.x = spawn.x; player.y = spawn.y; player.angle = spawn.angle; cameraPitch = 0; player.health = 100; player.score = 0; player.wave = 1; player.shot = 0; player.hurt = 0; player.rapid = 0; player.shield = 0; enemyDefeats = 0;
+    botLearning.velocityX = 0; botLearning.velocityY = 0; botLearning.hintTimer = 0;
+    projectiles.length = 0; impacts.length = 0; waveBreak = 0; waveBanner = 0;
+    window.PinguInventory?.clear();
+    if (network.active) {
+      network.hitEvents.clear();
+      for (const remote of network.remotes.values()) {
+        const remoteSpawn = playerSpawn(remote.slot);
+        remote.x = remote.tx = remoteSpawn.x; remote.y = remote.ty = remoteSpawn.y; remote.targetAngle = remoteSpawn.angle;
+        remote.health = remote.hp = 100; remote.score = 0; remote.flash = 0;
+      }
+    }
+    ui.score.textContent = '0000'; ui.health.textContent = '100'; ui.healthbar.style.width = '100%';
+    beginWave(); started = true; paused = false; intro = false;
+  }
+  function updateHud() {
+    ui.score.textContent = String(player.score).padStart(4, '0');
+    ui.health.textContent = Math.max(0, Math.ceil(player.health));
+    ui.healthbar.style.width = Math.max(0, player.health) + '%';
+    ui.healthbar.style.background = player.health < 30 ? 'linear-gradient(90deg,#ff5e78,#ffc26e)' : 'linear-gradient(90deg,#74e6c0,#e2f77f)';
+    ui.leftLabel.textContent = network.active ? 'Spelare' : 'Kvar';
+    ui.waveLabel.textContent = network.active ? 'Runda' : 'Våg';
+    ui.left.textContent = network.active ? String(network.remotes.size + 1) : enemies.length;
+  }
+  window.addEventListener('pingu:enemy-defeated', () => {
+    enemyDefeats++;
+    if (enemyDefeats % 3 === 0 && window.PinguInventory) {
+      const loot = ['heal', 'rapid', 'shield'][Math.floor(Math.random() * 3)];
+      window.PinguInventory.add(loot);
+    }
+  });
+  window.addEventListener('pingu:item-use', (event) => {
+    const type = event.detail?.id;
+    if (type === 'heal') {
+      if (player.health >= 100) { event.preventDefault(); window.PinguInventory?.notify('Hälsan är redan full'); return; }
+      player.health = Math.min(100, player.health + 35);
+      window.PinguInventory?.notify('Hälsan återställdes');
+    } else if (type === 'rapid') {
+      player.rapid = 8;
+      window.PinguInventory?.notify('Snabbkast aktivt · 8 s');
+    } else if (type === 'shield') {
+      player.shield = 6;
+      window.PinguInventory?.notify('Issköld aktiv · 6 s');
+    }
+    updateHud();
+  });
+  function showOverlay(mode) {
+    ui.overlay.classList.remove('hidden');
+    ui.panel.dataset.mode = mode;
+    ui.mapPicker.classList.toggle('hidden', mode !== 'start');
+    ui.start.classList.toggle('hidden', ['online-setup', 'online-error'].includes(mode));
+    ui.openOnline.classList.toggle('hidden', mode !== 'start');
+    ui.onlineSetup.classList.toggle('hidden', mode !== 'online-setup');
+    ui.onlineLobby.classList.toggle('hidden', !['lobby-host', 'lobby-guest'].includes(mode));
+    ui.secondary.classList.toggle('hidden', mode === 'start');
+    ui.secondary.textContent = mode === 'online-setup' || mode === 'online-error' ? 'Tillbaka' : 'Till titelmenyn';
+    ui.start.disabled = false;
+    if (mode === 'start') {
+      ui.leftLabel.textContent = 'Kvar'; ui.waveLabel.textContent = 'Våg';
+      ui.eyebrow.textContent = 'Pingu FPS Arena · Överlev snöstormen';
+      ui.title.textContent = 'Redo för snöbollskrig?';
+      ui.description.textContent = 'Överlev vågorna. Fiendebotarna lär sig dina rörelser och justerar siktet och sina undanmanövrar. Taktiken sparas på den här enheten.';
+      ui.start.textContent = 'Starta spelet';
+      ui.status.textContent = selectedMapId === 'city' ? 'Mörkerstad · trånga gränder, höga hus och upplysta fönster.' : 'Isarenan · frusen rink under norrskenet.';
+      ui.footnote.textContent = 'Klicka på startknappen för att börja';
+    } else if (mode === 'online-setup') {
+      ui.createRoom.disabled = false; ui.joinRoom.disabled = false;
+      ui.eyebrow.textContent = 'Spela med vänner';
+      ui.title.textContent = 'Starta ett snöbollskrig';
+      ui.description.textContent = 'Skapa ett rum och dela koden, eller skriv in en väns kod. Upp till fyra pingviner kan spela samtidigt.';
+      ui.status.textContent = 'Ni behöver internet och samma länk till spelet.';
+      ui.footnote.textContent = 'Nätspel använder en direkt anslutning mellan spelarna';
+      ui.onlineMessage.textContent = 'Skapa ett rum och dela länken. Vänner som öppnar den får rumskoden automatiskt.';
+    } else if (mode === 'lobby-host' || mode === 'lobby-guest') {
+      ui.eyebrow.textContent = mode === 'lobby-host' ? 'Du är värd' : 'Du har gått med';
+      ui.title.textContent = mode === 'lobby-host' ? 'Bjud in dina vänner' : 'Du är i lobbyn';
+      ui.description.textContent = mode === 'lobby-host' ? 'Skicka rumskoden till vännerna. När de har anslutit kan du starta matchen.' : 'När värden startar matchen kan du hoppa in och spela.';
+      ui.status.textContent = 'Rumskod';
+      ui.footnote.textContent = 'Dela koden med dem som ska spela';
+      updateLobby();
+    } else if (mode === 'pause') {
+      ui.eyebrow.textContent = 'Matchen är pausad';
+      ui.title.textContent = 'Paus';
+      ui.description.textContent = 'Ta ett andetag. Pingvinerna väntar på att snöbollskriget ska fortsätta.';
+      ui.start.textContent = 'Fortsätt';
+      ui.status.textContent = `Poäng ${player.score}  ·  Våg ${player.wave}  ·  Kvar ${enemies.length}`;
+      ui.footnote.textContent = 'Tryck P eller Esc för att pausa';
+    } else if (mode === 'online-ready') {
+      ui.eyebrow.textContent = 'Matchen har börjat';
+      ui.title.textContent = 'Redo att spela?';
+      ui.description.textContent = 'Klicka för att gå in i arenan. Sikta på de andra pingvinerna och kasta snöbollar.';
+      ui.start.textContent = 'Gå in i matchen';
+      ui.status.textContent = `Rum ${network.roomCode}  ·  ${network.remotes.size + 1} spelare`;
+      ui.footnote.textContent = 'W A S D · Musen siktar upp/ned och åt sidorna · Klicka för att kasta';
+    } else {
+      if (mode === 'online-error') {
+        ui.eyebrow.textContent = 'Anslutningen misslyckades';
+        ui.title.textContent = 'Kunde inte gå online';
+        ui.description.textContent = ui.onlineMessage.textContent;
+        ui.status.textContent = 'Kontrollera internetanslutningen och rumskoden.';
+        ui.footnote.textContent = 'Du kan försöka igen från titelmenyn';
+      } else if (network.active) {
+        ui.eyebrow.textContent = 'Matchresultat';
+        ui.title.textContent = player.health > 0 ? 'Du vann!' : 'Du blev utslagen';
+        ui.description.textContent = `Du fick ${player.score} poäng. ${network.host ? 'Starta en ny match när ni är redo.' : 'Vänta på att värden startar en ny match.'}`;
+        ui.start.textContent = network.host ? 'Spela igen' : 'Väntar på värden';
+        ui.start.disabled = !network.host;
+        ui.status.textContent = `Rum ${network.roomCode}  ·  Poäng ${player.score}`;
+        ui.footnote.textContent = 'Värden kan starta en ny match';
+      } else {
+        ui.eyebrow.textContent = 'Snöstormen tog över';
+        ui.title.textContent = 'Spelet är slut';
+        ui.description.textContent = `Du fick ${player.score} poäng och tog dig till våg ${player.wave}. Vill du försöka igen?`;
+        ui.start.textContent = 'Spela igen';
+        ui.status.textContent = `Slutresultat  ·  ${player.score} poäng  ·  Våg ${player.wave}`;
+        ui.footnote.textContent = 'En ny match börjar från första vågen';
+      }
+    }
+  }
+  function returnToTitle() {
+    document.exitPointerLock?.();
+    leaveOnline();
+    started = false; paused = true;
+    ui.start.disabled = false;
+    showOverlay('start');
+  }
+  function startFromButton() {
+    const mode = ui.panel.dataset.mode;
+    if (network.active) {
+      if (mode === 'lobby-host') { startOnlineMatch(); return; }
+      if (mode === 'lobby-guest') return;
+      if (mode === 'online-ready' || mode === 'pause') { activateGame(); return; }
+      if (mode === 'over') { if (network.host) startOnlineMatch(); return; }
+    }
+    if (!started || player.health <= 0) resetGame();
+    activateGame();
+  }
+  function activateGame() {
+    paused = false;
+    lastMouseX = null; lastMouseY = null;
+    if (canvas.requestPointerLock) canvas.requestPointerLock();
+    ui.overlay.classList.add('hidden');
+    lastTime = performance.now();
+  }
+  ui.start.addEventListener('click', startFromButton);
+  ui.mapPicker.addEventListener('click', event => {
+    const button = event.target.closest('[data-map]');
+    if (!button) return;
+    selectMap(button.dataset.map);
+    ui.status.textContent = selectedMapId === 'city' ? 'Mörkerstad · trånga gränder, höga hus och upplysta fönster.' : 'Isarenan · frusen rink under norrskenet.';
+  });
+  ui.openOnline.addEventListener('click', () => showOverlay('online-setup'));
+  ui.secondary.addEventListener('click', () => {
+    const mode = ui.panel.dataset.mode;
+    if (mode === 'online-setup') { leaveOnline(); showOverlay('start'); }
+    else if (mode === 'online-error') showOverlay('start');
+    else returnToTitle();
+  });
+  ui.createRoom.addEventListener('click', () => {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = new Uint8Array(6);
+    if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes);
+    else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    const code = Array.from(bytes, byte => alphabet[byte % alphabet.length]).join('');
+    setRoomInviteUrl(code);
+    beginOnline(true, code);
+  });
+  ui.joinRoom.addEventListener('click', () => {
+    const code = ui.roomCodeInput.value.trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(code)) { ui.onlineMessage.textContent = 'Skriv in en rumskod med sex bokstäver eller siffror.'; return; }
+    setRoomInviteUrl(code);
+    beginOnline(false, code);
+  });
+  ui.copyRoom.addEventListener('click', async () => {
+    const inviteUrl = roomInviteUrl(network.roomCode);
+    if (!inviteUrl) {
+      ui.onlineLobbyStatus.textContent = `Dela en länk först när spelet ligger på HTTPS. Rumskod: ${network.roomCode}.`;
+      return;
+    }
+    try { await navigator.clipboard.writeText(inviteUrl); ui.onlineLobbyStatus.textContent = 'Inbjudningslänken kopierades. Skicka den till dina vänner.'; }
+    catch { ui.onlineLobbyStatus.textContent = `Kopiera länken från adressfältet: ${inviteUrl}`; }
+  });
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement !== canvas && started && player.health > 0) { paused = true; showOverlay('pause'); }
+  });
+  document.addEventListener('pointerlockerror', () => { if (started) { paused = false; ui.overlay.classList.add('hidden'); } });
+  document.addEventListener('mousemove', (e) => {
+    if (!started || paused) return;
+    if (document.pointerLockElement === canvas) {
+      player.angle += e.movementX * .0022;
+      cameraPitch = clamp(cameraPitch + e.movementY * .0022, -.42, .42);
+      lastMouseX = null; lastMouseY = null;
+    } else {
+      // Some embedded browsers block Pointer Lock. Track ordinary mouse movement as a fallback.
+      if (lastMouseX !== null) player.angle += (e.clientX - lastMouseX) * .0022;
+      if (lastMouseY !== null) cameraPitch = clamp(cameraPitch + (e.clientY - lastMouseY) * .0022, -.42, .42);
+      lastMouseX = e.clientX; lastMouseY = e.clientY;
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    keys.add(e.code);
+    if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+    if ((e.code === 'KeyP' || e.code === 'Escape') && started && !paused && player.health > 0) {
+      paused = true; document.exitPointerLock?.(); showOverlay('pause');
+    }
+  });
+  document.addEventListener('keyup', (e) => keys.delete(e.code));
+  window.addEventListener('blur', () => keys.clear());
+  canvas.addEventListener('mousedown', (e) => { if (e.button === 0 && started && !paused) shoot(); });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  function shoot() {
+    if (player.shot > 0 || !started || paused) return;
+    if (!network.active) botLearning.playerShots++;
+    player.shot = player.rapid > 0 ? .16 : .34; shotFlash = .11; recoil = 1;
+    let best = null, bestDistance = Infinity;
+    const forwardX = Math.cos(player.angle), forwardY = Math.sin(player.angle);
+    const rightX = -forwardY, rightY = forwardX;
+    const focal = width / (2 * Math.tan(FOV / 2));
+    const viewHorizon = height * .49 - focal * Math.tan(cameraPitch);
+    const verticalSlope = (viewHorizon - height * .5) / focal;
+    const eyeHeight = .41;
+    const targets = network.active ? [...enemies, ...Array.from(network.remotes.values()).filter(remote => remote.health > 0)] : enemies;
+    for (const enemy of targets) {
+      const dx = enemy.x - player.x, dy = enemy.y - player.y;
+      const along = dx * forwardX + dy * forwardY;
+      const across = dx * rightX + dy * rightY;
+      const radius = enemy.hitRadius;
+      const chordSq = radius * radius - across * across;
+      if (along <= 0 || chordSq < 0) continue;
+      const chord = Math.sqrt(chordSq);
+      const enter = Math.max(0, along - chord), exit = along + chord;
+      if (exit <= 0 || enter > 18) continue;
+
+      // A shot is a 3D ray; intersect it with the penguin's vertical cylinder hitbox.
+      let hitDistance = enter;
+      if (Math.abs(verticalSlope) > 1e-8) {
+        const tFloor = (0 - eyeHeight) / verticalSlope;
+        const tTop = (enemy.hitHeight - eyeHeight) / verticalSlope;
+        hitDistance = Math.max(enter, 0, Math.min(tFloor, tTop));
+        const verticalExit = Math.min(exit, Math.max(tFloor, tTop));
+        if (hitDistance > verticalExit) continue;
+      } else if (eyeHeight < 0 || eyeHeight > enemy.hitHeight) continue;
+
+      if (hitDistance < bestDistance && castRay(player.angle).distance > hitDistance - .15) {
+        best = enemy; bestDistance = hitDistance;
+      }
+    }
+    const wallDistance = castRay(player.angle).distance;
+    const targetDistance = best ? bestDistance : Math.max(.65, Math.min(18, wallDistance - .08));
+    const targetHeight = eyeHeight + verticalSlope * targetDistance;
+    const targetX = player.x + forwardX * targetDistance;
+    const targetY = player.y + forwardY * targetDistance;
+    const startX = player.x + forwardX * .42 + rightX * .08;
+    const startY = player.y + forwardY * .42 + rightY * .08;
+    const startZ = .29, gravity = 2.4, speed = 11.5;
+    const aimX = targetX - startX, aimY = targetY - startY;
+    const horizontalDistance = Math.max(.001, Math.hypot(aimX, aimY));
+    const flightTime = Math.max(.01, horizontalDistance / speed);
+    const projectile = {
+      x: startX, y: startY, z: startZ, prevX: startX, prevY: startY, prevZ: startZ,
+      vx: aimX / horizontalDistance * speed, vy: aimY / horizontalDistance * speed,
+      vz: (targetHeight - startZ + .5 * gravity * flightTime * flightTime) / flightTime,
+      gravity, radius: .028, age: 0, maxAge: 1.8,
+      id: network.active ? `${network.id}-${++network.shotCount}` : '', ownerId: network.active ? network.id : ''
+    };
+    projectiles.push(projectile);
+    if (network.active) sendNetwork({ type: 'shot', id: projectile.id, ball: { x: projectile.x, y: projectile.y, z: projectile.z, vx: projectile.vx, vy: projectile.vy, vz: projectile.vz, gravity: projectile.gravity, radius: projectile.radius, maxAge: projectile.maxAge } });
+  }
+  function updateProjectiles(dt) {
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+      const ball = projectiles[i];
+      ball.age += dt; ball.prevX = ball.x; ball.prevY = ball.y; ball.prevZ = ball.z;
+      ball.vz -= ball.gravity * dt;
+      const nextX = ball.x + ball.vx * dt, nextY = ball.y + ball.vy * dt, nextZ = ball.z + ball.vz * dt;
+      const span = Math.hypot(nextX - ball.x, nextY - ball.y);
+      const steps = Math.max(1, Math.ceil(span / .07));
+      let removed = false;
+      for (let step = 1; step <= steps && !removed; step++) {
+        const t = step / steps, x = ball.x + (nextX - ball.x) * t, y = ball.y + (nextY - ball.y) * t, z = ball.z + (nextZ - ball.z) * t;
+        if (!circleCanOccupy(x, y, ball.radius)) {
+          impacts.push({ x, y, z, age: 0, duration: .28 }); removed = true; break;
+        }
+        const target = network.active || ball.enemyShot ? null : enemies.find(enemy => Math.hypot(enemy.x - x, enemy.y - y) <= enemy.hitRadius + ball.radius && z >= -ball.radius && z <= enemy.hitHeight + ball.radius);
+        if (target) {
+          botLearning.playerHits++;
+          target.hp--; target.flash = .18;
+          impacts.push({ x, y, z, age: 0, duration: .34 });
+          if (target.hp <= 0) {
+            window.dispatchEvent(new CustomEvent('pingu:enemy-defeated', { detail: { x: target.x, y: target.y, role: target.role, wave: player.wave } }));
+            enemies.splice(enemies.indexOf(target), 1); player.score += 100;
+          }
+          removed = true;
+        }
+        const hitPlayer = (ball.enemyShot || (network.active && ball.ownerId && ball.ownerId !== network.id)) && Math.hypot(player.x - x, player.y - y) <= .34 + ball.radius && z >= -ball.radius && z <= 1.08 + ball.radius;
+        if (hitPlayer) {
+          impacts.push({ x, y, z, age: 0, duration: .34 });
+          if (ball.enemyShot) recordBotShot(ball, true);
+          if (!ball.hitReported && player.health > 0 && player.shield <= 0 && player.hurt <= 0) {
+            ball.hitReported = true; player.health = Math.max(0, player.health - (ball.damage || 25)); player.hurt = .48;
+            ui.damage.classList.add('flash'); setTimeout(() => ui.damage.classList.remove('flash'), 130);
+            if (!ball.enemyShot) sendNetwork({ type: 'hit', targetId: network.id, shooterId: ball.ownerId, shotId: ball.id, health: player.health });
+            if (player.health <= 0) { paused = true; document.exitPointerLock?.(); showOverlay('over'); }
+          }
+          removed = true;
+        }
+      }
+      if (removed || nextZ < -ball.radius || ball.age >= ball.maxAge) {
+        if (ball.enemyShot) recordBotShot(ball, false);
+        if (!removed) impacts.push({ x: nextX, y: nextY, z: Math.max(0, nextZ), age: 0, duration: .24 });
+        projectiles.splice(i, 1);
+      } else { ball.x = nextX; ball.y = nextY; ball.z = nextZ; }
+    }
+    for (let i = impacts.length - 1; i >= 0; i--) {
+      impacts[i].age += dt;
+      if (impacts[i].age >= impacts[i].duration) impacts.splice(i, 1);
+    }
+  }
+  function drawProjectiles() {
+    const forwardX = Math.cos(player.angle), forwardY = Math.sin(player.angle);
+    const rightX = -forwardY, rightY = forwardX;
+    const focal = width / (2 * Math.tan(FOV / 2)), horizon = height * .49 - focal * Math.tan(cameraPitch), eyeHeight = .41;
+    const project = (x, y, z) => {
+      const dx = x - player.x, dy = y - player.y;
+      const depth = dx * forwardX + dy * forwardY;
+      if (depth <= .08) return null;
+      const lateral = dx * rightX + dy * rightY;
+      const sx = width / 2 + lateral * focal / depth;
+      const column = Math.floor(sx / width * columns);
+      if (column < 0 || column >= columns || zBuffer[column] < depth - .08) return null;
+      return { x: sx, y: horizon - (z - eyeHeight) * focal / depth, depth };
+    };
+    for (const ball of projectiles) {
+      const p = project(ball.x, ball.y, ball.z), prev = project(ball.prevX, ball.prevY, ball.prevZ);
+      if (!p) continue;
+      const radius = Math.max(2 * dpr, focal * ball.radius / p.depth);
+      if (prev) {
+        ctx.strokeStyle = ball.enemyShot ? '#8af2d0bb' : '#ffdca088'; ctx.lineWidth = Math.max(1.5 * dpr, radius * .65); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+      }
+      const glow = ctx.createRadialGradient(p.x - radius * .3, p.y - radius * .35, 0, p.x, p.y, radius * 2.2);
+      glow.addColorStop(0, '#ffffff'); glow.addColorStop(.35, ball.enemyShot ? '#d8fff4' : '#fff2d5'); glow.addColorStop(.7, ball.enemyShot ? '#64d8ce' : '#ffad83'); glow.addColorStop(1, ball.enemyShot ? '#64d8ce00' : '#ffad8300');
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(p.x, p.y, radius * 2.2, 0, Math.PI * 2); ctx.fill();
+    }
+    for (const impact of impacts) {
+      const p = project(impact.x, impact.y, impact.z);
+      if (!p) continue;
+      const progress = impact.age / impact.duration, radius = focal * (.055 + progress * .22) / p.depth;
+      ctx.globalAlpha = 1 - progress;
+      ctx.strokeStyle = '#fff1c7'; ctx.lineWidth = Math.max(1.2 * dpr, radius * .12);
+      ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); ctx.stroke();
+      for (let flake = 0; flake < 6; flake++) {
+        const angle = flake * Math.PI / 3 + .2;
+        ctx.fillStyle = '#fff8dc'; ctx.beginPath(); ctx.arc(p.x + Math.cos(angle) * radius * 1.35, p.y + Math.sin(angle) * radius * 1.35, Math.max(dpr, radius * .11), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  function drawIceFloor(horizon, projection) {
+    if (horizon >= height) return;
+    const pixels = floorImage.data;
+    const forwardX = Math.cos(player.angle), forwardY = Math.sin(player.angle);
+    const cameraX = -forwardY * Math.tan(FOV / 2), cameraY = forwardX * Math.tan(FOV / 2);
+    for (let x = 0; x < floorW; x++) {
+      const camera = (x + .5) / floorW * 2 - 1;
+      floorRayX[x] = forwardX + cameraX * camera;
+      floorRayY[x] = forwardY + cameraY * camera;
+      floorRayLength[x] = Math.hypot(floorRayX[x], floorRayY[x]);
+    }
+    const city = selectedMapId === 'city';
+    const tileSize = city ? .9 : 1.75;
+    for (let y = 0; y < floorH; y++) {
+      const screenY = horizon + (y + .5) / floorH * (height - horizon);
+      const rowDistance = projection * .41 / Math.max(1, screenY - horizon);
+      let worldX = player.x + rowDistance * floorRayX[0];
+      let worldY = player.y + rowDistance * floorRayY[0];
+      const stepX = floorW > 1 ? rowDistance * (floorRayX[1] - floorRayX[0]) : 0;
+      const stepY = floorW > 1 ? rowDistance * (floorRayY[1] - floorRayY[0]) : 0;
+      for (let x = 0; x < floorW; x++, worldX += stepX, worldY += stepY) {
+        const tx = worldX / tileSize, ty = worldY / tileSize;
+        const tileX = Math.floor(tx), tileY = Math.floor(ty);
+        const fx = tx - tileX, fy = ty - tileY;
+        const edge = Math.min(fx, 1 - fx, fy, 1 - fy);
+        let hash = (Math.imul(tileX, 73856093) ^ Math.imul(tileY, 19349663)) >>> 0;
+        hash = Math.imul(hash ^ (hash >>> 13), 1274126177) >>> 0;
+        const tileTone = hash / 4294967295;
+        const vein = Math.sin(worldX * 3.6 + worldY * 2.8);
+        let r, g, b;
+        if (city) {
+          r = 39 + tileTone * 12 + vein * 3; g = 49 + tileTone * 14 + vein * 4; b = 61 + tileTone * 17 + vein * 5;
+          if (edge < .018) { r -= 8; g -= 9; b -= 11; }
+          const horizontalRoad = (worldY > 3.8 && worldY < 6.2) || (worldY > 9.8 && worldY < 12.2);
+          const verticalRoad = (worldX > 3.8 && worldX < 6.2) || (worldX > 9.8 && worldX < 12.2);
+          const centerY = worldY > 8 ? 11 : 5, centerX = worldX > 8 ? 11 : 5;
+          const dashX = ((worldX % 1.45) + 1.45) % 1.45;
+          const dashY = ((worldY % 1.45) + 1.45) % 1.45;
+          const centerDash = (horizontalRoad && Math.abs(worldY - centerY) < .035 && dashX < .7)
+            || (verticalRoad && Math.abs(worldX - centerX) < .035 && dashY < .7);
+          const crosswalkX = (Math.abs(worldX - 5) < 1 || Math.abs(worldX - 11) < 1) && Math.abs(worldY - Math.round(centerY)) < .85 && (((worldX * 5) % 1) + 1) % 1 < .5;
+          const crosswalkY = (Math.abs(worldY - 5) < 1 || Math.abs(worldY - 11) < 1) && Math.abs(worldX - Math.round(centerX)) < .85 && (((worldY * 5) % 1) + 1) % 1 < .5;
+          if (centerDash || crosswalkX || crosswalkY) { r = 196; g = 185; b = 145; }
+          else if (edge < .04 && !horizontalRoad && !verticalRoad) { r += 8; g += 8; b += 8; }
+        } else {
+          r = 51 + tileTone * 17 + vein * 7;
+          g = 48 + tileTone * 16 + vein * 8;
+          b = 91 + tileTone * 27 + vein * 14;
+          if (edge < .022) { r -= 24; g -= 22; b -= 29; }
+          else if (edge < .042) { r += 22; g += 18; b += 34; }
+          const dx = worldX - 7.5, dy = worldY - 7.5;
+          const radiusSq = dx * dx + dy * dy;
+          const outerRing = Math.abs(radiusSq - 2.65 * 2.65) < .23;
+          const innerRing = Math.abs(radiusSq - 2.49 * 2.49) < .13;
+          const centerLine = Math.abs(dy) < .035 && Math.abs(dx) < 2.65;
+          const sideLine = Math.abs(Math.abs(dx) - 4.1) < .024 && Math.abs(dy) < 5.4;
+          if (outerRing || innerRing || centerLine || sideLine) {
+            r = r * .22 + 255 * .78; g = g * .22 + 202 * .78; b = b * .22 + 116 * .78;
+          }
+        }
+        const distance = rowDistance * floorRayLength[x];
+        const fog = Math.max(0, Math.min(.88, (distance - 5) / 19));
+        r = r * (1 - fog) + (city ? 20 : 32) * fog;
+        g = g * (1 - fog) + (city ? 26 : 31) * fog;
+        b = b * (1 - fog) + (city ? 38 : 63) * fog;
+        const i = (y * floorW + x) * 4;
+        pixels[i] = r; pixels[i + 1] = g; pixels[i + 2] = b; pixels[i + 3] = 255;
+      }
+    }
+    floorCtx.putImageData(floorImage, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(floorCanvas, 0, horizon, width, height - horizon);
+  }
+  function update(dt) {
+    if (!started || paused || player.health <= 0) return;
+    waveBanner = Math.max(0, waveBanner - dt);
+    player.shot = Math.max(0, player.shot - dt); shotFlash = Math.max(0, shotFlash - dt); recoil = Math.max(0, recoil - dt * 5); player.hurt = Math.max(0, player.hurt - dt);
+    player.rapid = Math.max(0, player.rapid - dt); player.shield = Math.max(0, player.shield - dt);
+    let forward = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
+    let strafe = (keys.has('KeyD') ? 1 : 0) - (keys.has('KeyA') ? 1 : 0);
+    if (keys.has('ArrowLeft')) player.angle -= dt * 2;
+    if (keys.has('ArrowRight')) player.angle += dt * 2;
+    const length = Math.hypot(forward, strafe) || 1, pace = (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 4.7 : 3.25) * dt;
+    forward /= length; strafe /= length;
+    const dx = (Math.cos(player.angle) * forward - Math.sin(player.angle) * strafe) * pace;
+    const dy = (Math.sin(player.angle) * forward + Math.cos(player.angle) * strafe) * pace;
+    const oldX = player.x, oldY = player.y;
+    moveCircle(player, dx, dy, .2);
+    if (dt > 0) {
+      const learnRate = 1 - Math.exp(-dt * 2.6);
+      botLearning.velocityX += ((player.x - oldX) / dt - botLearning.velocityX) * learnRate;
+      botLearning.velocityY += ((player.y - oldY) / dt - botLearning.velocityY) * learnRate;
+    }
+    const strafeTarget = Math.sign(strafe);
+    botLearning.strafeBias += (strafeTarget - botLearning.strafeBias) * Math.min(1, dt * (strafeTarget ? 1.35 : .12));
+    updateProjectiles(dt);
+    for (const enemy of enemies) {
+      enemy.wobble += dt * (enemy.role === 'runner' ? 4.5 : 3); enemy.flash = Math.max(0, enemy.flash - dt); enemy.attack -= dt; enemy.repath -= dt; enemy.strafeTimer -= dt;
+      const ex = player.x - enemy.x, ey = player.y - enemy.y, dist = Math.hypot(ex, ey);
+      const playerCell = `${Math.floor(player.x)},${Math.floor(player.y)}`;
+      const lineOfSight = hasLineOfSight(enemy.x, enemy.y, player.x, player.y);
+      const canShoot = lineOfSight && dist >= 1.4 && dist <= 8.5;
+      if (!canShoot && (enemy.repath <= 0 || enemy.targetCell !== playerCell || !enemy.path.length)) {
+        enemy.path = findEnemyPath(enemy.x, enemy.y, player.x, player.y);
+        enemy.targetCell = playerCell; enemy.repath = .28 + Math.random() * .12;
+      }
+      if (!canShoot) while (enemy.path.length && Math.floor(enemy.x) === Math.floor(enemy.path[0][0]) && Math.floor(enemy.y) === Math.floor(enemy.path[0][1])) enemy.path.shift();
+
+      if (canShoot) {
+        enemy.path.length = 0;
+        if (enemy.strafeTimer <= 0) {
+          enemy.strafeTimer = 1.1 + Math.random() * 1.4;
+          const learnedSide = Math.sign(botLearning.strafeBias);
+          enemy.strafeDirection = learnedSide && Math.random() < .62 ? -learnedSide : (Math.random() < .5 ? -1 : 1);
+        }
+        const looksAtEnemy = Math.abs(Math.atan2(Math.sin(Math.atan2(enemy.y - player.y, enemy.x - player.x) - player.angle), Math.cos(Math.atan2(enemy.y - player.y, enemy.x - player.x) - player.angle))) < .34;
+        const playerAccuracy = botLearning.playerShots ? botLearning.playerHits / botLearning.playerShots : 0;
+        const evade = looksAtEnemy ? .65 + clamp(playerAccuracy, 0, .8) * .8 : .42;
+        const preferredDodge = -botLearning.strafeBias * .18;
+        const radial = clamp((dist - 4) * .28, -.42, .55);
+        let moveX = ex / dist * radial + (-ey / dist) * (enemy.strafeDirection * evade + preferredDodge * .25);
+        let moveY = ey / dist * radial + (ex / dist) * (enemy.strafeDirection * evade + preferredDodge * .25);
+        for (const other of enemies) if (other !== enemy) {
+          const sx = enemy.x - other.x, sy = enemy.y - other.y, spacing = Math.hypot(sx, sy);
+          if (spacing > .001 && spacing < .68) { const force = (.68 - spacing) / .68; moveX += sx / spacing * force; moveY += sy / spacing * force; }
+        }
+        const steeringLength = Math.hypot(moveX, moveY) || 1;
+        moveCircle(enemy, moveX / steeringLength * enemy.speed * dt, moveY / steeringLength * enemy.speed * dt, enemy.collisionRadius);
+        if (enemy.windup > 0) {
+          enemy.windup = Math.max(0, enemy.windup - dt);
+          if (enemy.windup === 0) {
+            fireEnemyShot(enemy, dist);
+            enemy.attack = enemy.shotCooldown * (.9 + Math.random() * .2);
+          }
+        } else if (enemy.attack <= 0) {
+          enemy.windup = enemy.windupDuration;
+        }
+      } else if (dist > 1.15 || !lineOfSight) {
+        enemy.windup = 0;
+        let goalX = player.x, goalY = player.y;
+        if (enemy.path.length) { goalX = enemy.path[0][0]; goalY = enemy.path[0][1]; }
+        let moveX = goalX - enemy.x, moveY = goalY - enemy.y;
+        const moveLength = Math.hypot(moveX, moveY) || 1; moveX /= moveLength; moveY /= moveLength;
+        // Keep a little breathing room so the pack does not collapse into one stack.
+        let separateX = 0, separateY = 0;
+        for (const other of enemies) if (other !== enemy) {
+          const sx = enemy.x - other.x, sy = enemy.y - other.y, spacing = Math.hypot(sx, sy);
+          if (spacing > .001 && spacing < .68) { const force = (.68 - spacing) / .68; separateX += sx / spacing * force; separateY += sy / spacing * force; }
+        }
+        moveX += separateX * 1.25; moveY += separateY * 1.25;
+        const steeringLength = Math.hypot(moveX, moveY) || 1;
+        moveCircle(enemy, moveX / steeringLength * enemy.speed * dt, moveY / steeringLength * enemy.speed * dt, enemy.collisionRadius);
+      } else if (enemy.attack <= 0) {
+        enemy.windup = 0;
+        if (player.shield > 0) { enemy.attack = enemy.attackCooldown; continue; }
+        if (player.hurt > 0) { enemy.attack = .12 + Math.random() * .16; continue; }
+        enemy.attack = enemy.attackCooldown; player.health -= enemy.attackDamage; player.hurt = .48;
+        ui.damage.classList.add('flash'); setTimeout(() => ui.damage.classList.remove('flash'), 100);
+        if (player.health <= 0) { player.health = 0; paused = true; document.exitPointerLock?.(); showOverlay('over'); break; }
+      }
+    }
+    botLearning.hintTimer -= dt;
+    if (botLearning.hintTimer <= 0) {
+      const side = Math.abs(botLearning.strafeBias) < .15 ? 'växlande rörelser' : botLearning.strafeBias > 0 ? 'högersteg' : 'vänstersteg';
+      ui.aiHint.textContent = network.active ? 'Onlinespel · utmana dina vänner' : `WASD gå · mus sikta upp/ned · botarna lär sig ${side}`;
+      botLearning.hintTimer = 2;
+    }
+    botLearning.saveTimer += dt;
+    if (botLearning.saveTimer >= 8) { saveBotLearning(); botLearning.saveTimer = 0; }
+    if (!network.active) {
+      if (waveBreak > 0) {
+        waveBreak = Math.max(0, waveBreak - dt);
+        if (waveBreak === 0) { player.wave++; beginWave(); }
+      } else if (enemies.length === 0) {
+        const restoredHealth = Math.ceil(Math.min(15, 100 - player.health));
+        waveBreak = 1.35; waveBanner = 1.35;
+        waveBannerText = restoredHealth > 0 ? `VÅG KLAR · HÄLSA +${restoredHealth}` : 'VÅG KLAR';
+        player.health = Math.min(100, player.health + 15);
+        for (let i = projectiles.length - 1; i >= 0; i--) if (projectiles[i].enemyShot) projectiles.splice(i, 1);
+      }
+    }
+    for (const remote of network.remotes.values()) {
+      const blend = Math.min(1, dt * 13);
+      remote.x += (remote.tx - remote.x) * blend; remote.y += (remote.ty - remote.y) * blend;
+      let angleDelta = Math.atan2(Math.sin(remote.targetAngle - remote.angle), Math.cos(remote.targetAngle - remote.angle));
+      remote.angle += angleDelta * blend; remote.wobble += dt * 3; remote.flash = Math.max(0, remote.flash - dt);
+    }
+    updateHud();
+  }
+  const PENGUIN_MATERIALS = {
+    body: '#425f70', belly: '#e8f2ef', head: '#526f7a', wing: '#263f4c',
+    scarf: '#45bdb3', hat: '#4a9ba8', orange: '#ed9450', armor: '#a9c1c7',
+    lens: '#62d1cf', socket: '#152b35', eye: '#f1fbf7', pupil: '#091820'
+  };
+  const PENGUIN_COLOR_CACHE = new Map();
+  function penguinFaceColor(material, intensity, flash) {
+    const level = Math.max(0, Math.min(15, Math.round(intensity * 15)));
+    const source = flash ? (material === 'orange' ? '#ffe1b1' : '#d9fbff') : PENGUIN_MATERIALS[material];
+    const key = source + ':' + level;
+    if (PENGUIN_COLOR_CACHE.has(key)) return PENGUIN_COLOR_CACHE.get(key);
+    const factor = .28 + level / 15 * .92;
+    const rgb = [1, 3, 5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(source.slice(i, i + 2), 16) * factor))));
+    const color = '#' + rgb.map(n => n.toString(16).padStart(2, '0')).join('');
+    PENGUIN_COLOR_CACHE.set(key, color);
+    return color;
+  }
+  function buildPenguinMesh() {
+    const triangles = [];
+    const addFace = (vertices, material, role, motion, center) => {
+      let [a, b, c] = vertices.map(v => v.slice());
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+      const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      const cx = (a[0] + b[0] + c[0]) / 3 - center[0];
+      const cy = (a[1] + b[1] + c[1]) / 3 - center[1];
+      const cz = (a[2] + b[2] + c[2]) / 3 - center[2];
+      if (nx * cx + ny * cy + nz * cz < 0) [b, c] = [c, b];
+      const area = Math.hypot(nx, ny, nz);
+      if (area > .00001) triangles.push({ vertices: [a, b, c], material, role, motion });
+    };
+    const ellipsoid = (x, y, z, rx, ry, rz, material, role = null, motion = 0, segments = 8, rings = 6) => {
+      const center = [x, y, z];
+      const point = (lat, lon) => [
+        x + rx * Math.cos(lat) * Math.cos(lon),
+        y + ry * Math.sin(lat),
+        z + rz * Math.cos(lat) * Math.sin(lon)
+      ];
+      for (let ring = 0; ring < rings; ring++) {
+        const lat0 = -Math.PI / 2 + Math.PI * ring / rings;
+        const lat1 = -Math.PI / 2 + Math.PI * (ring + 1) / rings;
+        for (let segment = 0; segment < segments; segment++) {
+          const lon0 = Math.PI * 2 * segment / segments;
+          const lon1 = Math.PI * 2 * (segment + 1) / segments;
+          const p00 = point(lat0, lon0), p01 = point(lat0, lon1);
+          const p10 = point(lat1, lon0), p11 = point(lat1, lon1);
+          addFace([p00, p10, p01], material, role, motion, center);
+          addFace([p01, p10, p11], material, role, motion, center);
+        }
+      }
+    };
+
+    // Local proportions are uniformly reduced to 77% of the old silhouette.
+    // The farthest feather/gear reaches about .317 units and the top about .783.
+    ellipsoid(0, .43, 0, .31, .40, .23, 'body', null, 0, 10, 8);
+    ellipsoid(0, .42, .185, .205, .285, .095, 'belly', null, 0, 10, 8);
+    ellipsoid(0, .77, .035, .225, .225, .215, 'head', null, 0, 10, 8);
+    ellipsoid(-.275, .40, .025, .09, .27, .12, 'wing', null, -1);
+    ellipsoid(.275, .40, .025, .09, .27, .12, 'wing', null, 1);
+    ellipsoid(-.14, .055, .045, .135, .058, .14, 'orange');
+    ellipsoid(.14, .055, .045, .135, .058, .14, 'orange');
+
+    ellipsoid(0, .595, .225, .25, .065, .085, 'scarf');
+    ellipsoid(.19, .505, .285, .055, .11, .045, 'scarf');
+    ellipsoid(0, .885, .025, .225, .035, .205, 'hat');
+    ellipsoid(0, .94, .01, .185, .075, .17, 'hat');
+    ellipsoid(0, 1.002, .01, .015, .015, .015, 'belly', null, 0, 6, 4);
+
+    for (const side of [-1, 1]) {
+      ellipsoid(side * .078, .795, .227, .06, .07, .035, 'socket', null, 0, 8, 6);
+      ellipsoid(side * .078, .795, .253, .043, .054, .03, 'eye', null, 0, 8, 6);
+      ellipsoid(side * .07, .792, .279, .021, .03, .017, 'pupil', null, 0, 6, 4);
+      ellipsoid(side * .064, .808, .293, .008, .01, .008, 'belly', null, 0, 6, 4);
+    }
+
+    // A compact, faceted beak wedge with a projecting tip.
+    const beakCenter = [0, .702, .29];
+    const beakLeft = [-.075, .728, .255], beakRight = [.075, .728, .255];
+    const beakLow = [0, .672, .255], beakTip = [0, .704, .365];
+    addFace([beakLeft, beakRight, beakTip], 'orange', null, 0, beakCenter);
+    addFace([beakRight, beakLow, beakTip], 'orange', null, 0, beakCenter);
+    addFace([beakLow, beakLeft, beakTip], 'orange', null, 0, beakCenter);
+
+    ellipsoid(0, .858, .055, .224, .032, .19, 'orange', 'runner');
+    ellipsoid(-.078, .795, .28, .05, .05, .027, 'lens', 'runner', 0, 8, 6);
+    ellipsoid(.078, .795, .28, .05, .05, .027, 'lens', 'runner', 0, 8, 6);
+    ellipsoid(-.23, .56, .12, .105, .11, .11, 'armor', 'heavy');
+    ellipsoid(.23, .56, .12, .105, .11, .11, 'armor', 'heavy');
+    ellipsoid(0, .55, .263, .105, .115, .045, 'armor', 'heavy');
+    return triangles;
+  }
+  const PENGUIN_MESH = buildPenguinMesh();
+  const PENGUIN_MODEL_SCALE = .77;
+
+  function drawPenguin(enemy, distance, screenX, spriteH, floorY) {
+    const focal = width / (2 * Math.tan(FOV / 2));
+    const spriteW = focal * .68 / distance;
+    const spriteTop = floorY - spriteH;
+    const towardX = player.x - enemy.x, towardY = player.y - enemy.y;
+    const towardLength = Math.max(.001, Math.hypot(towardX, towardY));
+    const facingX = towardX / towardLength, facingY = towardY / towardLength;
+    const rightX = -facingY, rightY = facingX;
+    const forwardX = Math.cos(player.angle), forwardY = Math.sin(player.angle);
+    const cameraRightX = -forwardY, cameraRightY = forwardX;
+    const horizon = height * .49 - focal * Math.tan(cameraPitch), eyeHeight = .41;
+    const wobble = Number.isFinite(enemy.wobble) ? enemy.wobble : 0;
+    const localToWorld = (vertex, motion = 0) => {
+      let [lx, ly, lz] = vertex;
+      if (motion) {
+        const hinge = motion * .2;
+        const flap = Math.sin(wobble + motion * .35) * .11 * motion;
+        const ox = lx - hinge;
+        lx = hinge + ox * Math.cos(flap);
+        ly += ox * Math.sin(flap);
+      }
+      ly += Math.sin(wobble * 2) * .006;
+      lx *= PENGUIN_MODEL_SCALE; ly *= PENGUIN_MODEL_SCALE; lz *= PENGUIN_MODEL_SCALE;
+      return {
+        x: enemy.x + rightX * lx + facingX * lz,
+        y: enemy.y + rightY * lx + facingY * lz,
+        z: ly
+      };
+    };
+    const project = world => {
+      const dx = world.x - player.x, dy = world.y - player.y;
+      const depth = dx * forwardX + dy * forwardY;
+      if (depth <= .08) return null;
+      const lateral = dx * cameraRightX + dy * cameraRightY;
+      return {
+        x: width / 2 + lateral * focal / depth,
+        y: horizon - (world.z - eyeHeight) * focal / depth,
+        depth,
+        world
+      };
+    };
+    const faces = [];
+    for (const face of PENGUIN_MESH) {
+      if (face.role && face.role !== enemy.role) continue;
+      const world = face.vertices.map(v => localToWorld(v, face.motion));
+      const projected = world.map(project);
+      if (projected.some(v => !v)) continue;
+      const [a, b, c] = world;
+      const ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z;
+      const vx = c.x - a.x, vy = c.y - a.y, vz = c.z - a.z;
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      const normalLength = Math.hypot(nx, ny, nz);
+      if (normalLength < .00001) continue;
+      nx /= normalLength; ny /= normalLength; nz /= normalLength;
+      const center = {
+        x: (a.x + b.x + c.x) / 3,
+        y: (a.y + b.y + c.y) / 3,
+        z: (a.z + b.z + c.z) / 3
+      };
+      const toCameraX = player.x - center.x, toCameraY = player.y - center.y, toCameraZ = eyeHeight - center.z;
+      if (nx * toCameraX + ny * toCameraY + nz * toCameraZ <= 0) continue;
+      const area = Math.abs((projected[1].x - projected[0].x) * (projected[2].y - projected[0].y)
+        - (projected[1].y - projected[0].y) * (projected[2].x - projected[0].x));
+      if (area < Math.max(.28, .32 * dpr * dpr)) continue;
+      const light = Math.max(0, nx * -.28 + ny * -.38 + nz * .88);
+      const intensity = .43 + light * .57;
+      faces.push({
+        vertices: projected,
+        material: face.material,
+        depth: (projected[0].depth + projected[1].depth + projected[2].depth) / 3,
+        color: penguinFaceColor(face.material, intensity, enemy.flash > 0)
+      });
+    }
+    faces.sort((a, b) => b.depth - a.depth);
+
+    // Clip the contact shadow to columns where the ground actor is in front of the wall.
+    const shadowStart = Math.max(0, Math.floor((screenX - spriteW * .48) / width * columns));
+    const shadowEnd = Math.min(columns - 1, Math.floor((screenX + spriteW * .48) / width * columns));
+    ctx.save(); ctx.beginPath();
+    for (let i = shadowStart; i <= shadowEnd; i++) if (zBuffer[i] > distance + .015) ctx.rect(i / columns * width, 0, width / columns + 1, height);
+    ctx.clip(); ctx.fillStyle = '#06152279';
+    ctx.beginPath(); ctx.ellipse(screenX, floorY - 1.2 * dpr, spriteW * .38, Math.max(2 * dpr, spriteH * .035), 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+
+    const columnWidth = width / columns;
+    const triangleDepthAcrossColumn = (vertices, left, right) => {
+      const depths = [];
+      for (const vertex of vertices) if (vertex.x >= left && vertex.x <= right) depths.push(vertex.depth);
+      const sampleBoundary = x => {
+        for (let edge = 0; edge < 3; edge++) {
+          const a = vertices[edge], b = vertices[(edge + 1) % 3];
+          const dx = b.x - a.x;
+          if (Math.abs(dx) < .0001) {
+            if (Math.abs(x - a.x) < .0001) depths.push(a.depth, b.depth);
+            continue;
+          }
+          const t = (x - a.x) / dx;
+          if (t >= -.0001 && t <= 1.0001) {
+            const clamped = Math.max(0, Math.min(1, t));
+            const inverseDepth = (1 - clamped) / a.depth + clamped / b.depth;
+            if (inverseDepth > 0) depths.push(1 / inverseDepth);
+          }
+        }
+      };
+      sampleBoundary(left); sampleBoundary(right);
+      return depths.length ? Math.max(...depths) : null;
+    };
+
+    for (const face of faces) {
+      const minX = Math.min(face.vertices[0].x, face.vertices[1].x, face.vertices[2].x);
+      const maxX = Math.max(face.vertices[0].x, face.vertices[1].x, face.vertices[2].x);
+      const start = Math.max(0, Math.floor(minX / width * columns));
+      const end = Math.min(columns - 1, Math.floor(maxX / width * columns));
+      const visible = [];
+      for (let i = start; i <= end; i++) {
+        const sliceDepth = triangleDepthAcrossColumn(face.vertices, i * columnWidth, (i + 1) * columnWidth);
+        if (sliceDepth !== null && zBuffer[i] > sliceDepth + .012) visible.push(i);
+      }
+      if (!visible.length) continue;
+      ctx.save(); ctx.beginPath();
+      for (const i of visible) ctx.rect(i * columnWidth, 0, columnWidth + 1, height);
+      ctx.clip();
+      ctx.fillStyle = face.color;
+      ctx.beginPath();
+      ctx.moveTo(face.vertices[0].x, face.vertices[0].y);
+      ctx.lineTo(face.vertices[1].x, face.vertices[1].y);
+      ctx.lineTo(face.vertices[2].x, face.vertices[2].y);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    if (enemy.windup > 0) {
+      const chargePoint = project({ x: enemy.x + facingX * .28, y: enemy.y + facingY * .28, z: .55 });
+      if (chargePoint) {
+        const chargeColumn = Math.floor(chargePoint.x / width * columns);
+        if (chargeColumn >= 0 && chargeColumn < columns && zBuffer[chargeColumn] > chargePoint.depth + .02) {
+          const progress = 1 - clamp(enemy.windup / (enemy.windupDuration || .44), 0, 1);
+          const radius = Math.max(2 * dpr, focal * (.009 + progress * .006) / chargePoint.depth);
+          const pulse = .78 + Math.sin(wobble * 12) * .16;
+          ctx.save(); ctx.globalAlpha = pulse;
+          const glow = ctx.createRadialGradient(chargePoint.x, chargePoint.y, 0, chargePoint.x, chargePoint.y, radius * 2.3);
+          glow.addColorStop(0, '#fff8dc'); glow.addColorStop(.22, '#ffd878'); glow.addColorStop(1, '#ff8a6200');
+          ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(chargePoint.x, chargePoint.y, radius * 2.3, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff1bd'; ctx.lineWidth = Math.max(1, dpr);
+          ctx.beginPath(); ctx.arc(chargePoint.x, chargePoint.y, radius * (.45 + progress * .4), 0, Math.PI * 2); ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+
+    const centerColumn = Math.max(0, Math.min(columns - 1, Math.floor(screenX / width * columns)));
+    if (zBuffer[centerColumn] > distance + .015 && (enemy.maxHp > 1 || (network.active && network.remotes.has(enemy.id)))) {
+      const overlayStart = Math.max(0, Math.floor((screenX - spriteW * .85) / width * columns));
+      const overlayEnd = Math.min(columns - 1, Math.floor((screenX + spriteW * .85) / width * columns));
+      ctx.save(); ctx.beginPath();
+      for (let i = overlayStart; i <= overlayEnd; i++) if (zBuffer[i] > distance + .015) ctx.rect(i * columnWidth, 0, columnWidth + 1, height);
+      ctx.clip();
+      if (enemy.maxHp > 1) {
+        const barY = spriteTop - 8 * dpr, barW = spriteW * .62;
+        ctx.fillStyle = '#071522d9'; ctx.fillRect(screenX - barW / 2, barY, barW, 4 * dpr);
+        ctx.fillStyle = '#71e6db'; ctx.fillRect(screenX - barW / 2 + dpr, barY + dpr, (barW - 2 * dpr) * enemy.hp / enemy.maxHp, 2 * dpr);
+      }
+      if (network.active && network.remotes.has(enemy.id)) {
+        ctx.textAlign = 'center'; ctx.font = '700 ' + Math.max(10, 11 * dpr) + 'px "Segoe UI", sans-serif';
+        ctx.fillStyle = '#061522cc'; ctx.fillText(enemy.name, screenX + dpr, spriteTop - 13 * dpr + dpr);
+        ctx.fillStyle = '#e8fbff'; ctx.fillText(enemy.name, screenX, spriteTop - 13 * dpr);
+      }
+      ctx.restore();
+    }
+  }
+  function drawWaveBanner() {
+    if (waveBanner <= 0 || !waveBannerText) return;
+    const boxWidth = Math.min(width * .78, 420 * dpr), boxHeight = 52 * dpr;
+    const x = (width - boxWidth) / 2, y = height * .18;
+    const fade = Math.min(1, (1.8 - waveBanner) / .18, waveBanner / .24);
+    ctx.save(); ctx.globalAlpha = clamp(fade, 0, 1);
+    ctx.fillStyle = '#17152ddd'; ctx.strokeStyle = '#ffd878a8'; ctx.lineWidth = dpr;
+    ctx.beginPath(); ctx.roundRect(x, y, boxWidth, boxHeight, 14 * dpr); ctx.fill(); ctx.stroke();
+    const fontSize = Math.min(19 * dpr, boxWidth / Math.max(8, waveBannerText.length * .62));
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `900 ${fontSize}px "Segoe UI", sans-serif`;
+    ctx.fillStyle = '#fff1c7'; ctx.fillText(waveBannerText, width / 2, y + boxHeight * .47);
+    if (waveBreak > 0) {
+      const barX = x + 18 * dpr, barY = y + boxHeight - 5 * dpr, barWidth = boxWidth - 36 * dpr;
+      ctx.fillStyle = '#ffffff28'; ctx.fillRect(barX, barY, barWidth, 2 * dpr);
+      ctx.fillStyle = '#8af2d0'; ctx.fillRect(barX, barY, barWidth * (1 - waveBreak / 1.35), 2 * dpr);
+    }
+    ctx.restore();
+  }
+  function drawCitySky(horizon) {
+    const sky = ctx.createLinearGradient(0, 0, 0, Math.max(1, horizon));
+    sky.addColorStop(0, '#10192d'); sky.addColorStop(.52, '#35445a'); sky.addColorStop(1, '#e49b7d');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
+    const glowX = width * .52, glowY = horizon * .88, glowR = Math.max(width, height) * .3;
+    const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowR);
+    glow.addColorStop(0, '#f0ad8b40'); glow.addColorStop(1, '#f0ad8b00');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, width, horizon);
+    for (let layer = 0; layer < 2; layer++) {
+      const step = width / (layer === 0 ? 20 : 31);
+      const base = layer === 0 ? '#35445c' : '#1d2a40';
+      for (let index = -1; index < (layer === 0 ? 21 : 32); index++) {
+        const x = index * step + (layer ? step * .16 : 0);
+        const variation = Math.abs(Math.sin((index + 17) * 12.9898 + layer * 78.23));
+        const buildingW = step * (.66 + variation * .23);
+        const buildingH = horizon * (.16 + variation * (layer === 0 ? .25 : .36));
+        const roofY = horizon - buildingH;
+        ctx.fillStyle = base;
+        ctx.beginPath();
+        ctx.moveTo(x, horizon); ctx.lineTo(x, roofY + 10 * dpr);
+        ctx.quadraticCurveTo(x, roofY, x + 10 * dpr, roofY);
+        ctx.lineTo(x + buildingW - 8 * dpr, roofY);
+        ctx.quadraticCurveTo(x + buildingW, roofY, x + buildingW, roofY + 9 * dpr);
+        ctx.lineTo(x + buildingW, horizon); ctx.closePath(); ctx.fill();
+        const cols = Math.max(2, Math.floor(buildingW / (layer ? 15 : 19) / dpr));
+        const rows = Math.max(2, Math.floor(buildingH / (layer ? 17 : 21) / dpr));
+        for (let row = 1; row < rows; row++) for (let col = 0; col < cols; col++) {
+          const seed = Math.abs(Math.sin((index + col * 13 + row * 31) * 4.73 + layer * 11));
+          if (seed < .43) continue;
+          const windowX = x + 8 * dpr + col * (buildingW - 16 * dpr) / cols;
+          const windowY = roofY + 12 * dpr + row * (buildingH - 18 * dpr) / rows;
+          ctx.fillStyle = seed > .76 ? '#ffd18a75' : '#9eb4c32a';
+          ctx.fillRect(windowX, windowY, Math.max(2 * dpr, 3.2 * dpr), Math.max(3 * dpr, 5 * dpr));
+        }
+        if (layer === 1 && variation > .72) {
+          ctx.strokeStyle = '#a4b4c455'; ctx.lineWidth = 1.4 * dpr;
+          ctx.beginPath(); ctx.moveTo(x + buildingW * .68, roofY); ctx.lineTo(x + buildingW * .68, roofY - 16 * dpr); ctx.stroke();
+        }
+      }
+    }
+    const haze = ctx.createLinearGradient(0, horizon * .7, 0, horizon);
+    haze.addColorStop(0, '#e8a88700'); haze.addColorStop(1, '#e8a8872b');
+    ctx.fillStyle = haze; ctx.fillRect(0, horizon * .66, width, horizon * .34);
+  }
+  function render(dt) {
+    const projection = width / (2 * Math.tan(FOV / 2));
+    const horizon = height * .49 - projection * Math.tan(cameraPitch);
+    if (selectedMapId === 'city') {
+      drawCitySky(horizon);
+    } else {
+    const sky = ctx.createLinearGradient(0, 0, 0, Math.max(1, horizon)); sky.addColorStop(0, '#22234f'); sky.addColorStop(.56, '#826ba2'); sky.addColorStop(1, '#f4b19a');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, width, height);
+    // Aurora and distant ice peaks give the arena a stronger frozen-night setting.
+    const auroraEnd = Math.abs(horizon * .9 - height * .03) < 1 ? height * .03 + 1 : horizon * .9;
+    const aurora = ctx.createLinearGradient(0, height * .03, 0, auroraEnd);
+    aurora.addColorStop(0, '#ffba7f00'); aurora.addColorStop(.48, '#ff9e9b38'); aurora.addColorStop(1, '#b4a5ff00');
+    ctx.fillStyle = aurora; ctx.beginPath();
+    ctx.moveTo(0, horizon * .68); ctx.bezierCurveTo(width * .18, horizon * .05, width * .32, horizon * .88, width * .52, horizon * .36);
+    ctx.bezierCurveTo(width * .7, horizon * .02, width * .84, horizon * .7, width, horizon * .18); ctx.lineTo(width, 0); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#ffd8783d'; ctx.lineWidth = 16 * dpr; ctx.shadowColor = '#ff9c8caa'; ctx.shadowBlur = 28 * dpr;
+    ctx.beginPath(); ctx.moveTo(-width * .05, horizon * .62); ctx.bezierCurveTo(width * .22, horizon * .02, width * .39, horizon * .88, width * .58, horizon * .32); ctx.bezierCurveTo(width * .74, horizon * .08, width * .88, horizon * .58, width * 1.05, horizon * .12); ctx.stroke(); ctx.shadowBlur = 0;
+    const moonX = width * .79, moonY = horizon * .22, moonR = Math.min(width, height) * .035;
+    const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * .3, moonX, moonY, moonR * 3.2);
+    moonGlow.addColorStop(0, '#ffd87855'); moonGlow.addColorStop(1, '#ffd87800');
+    ctx.fillStyle = moonGlow; ctx.beginPath(); ctx.arc(moonX, moonY, moonR * 3.2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff0bd'; ctx.beginPath(); ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffd987'; ctx.beginPath(); ctx.arc(moonX - moonR * .25, moonY - moonR * .2, moonR * .78, 0, Math.PI * 2); ctx.fill();
+    // Low mountain silhouettes sit at the far edge of the arena.
+    ctx.fillStyle = '#39345fae'; ctx.beginPath(); ctx.moveTo(0, horizon);
+    ctx.lineTo(0, horizon * .79); ctx.lineTo(width * .08, horizon * .61); ctx.lineTo(width * .16, horizon * .83); ctx.lineTo(width * .29, horizon * .53);
+    ctx.lineTo(width * .4, horizon * .83); ctx.lineTo(width * .55, horizon * .59); ctx.lineTo(width * .67, horizon * .85); ctx.lineTo(width * .82, horizon * .58);
+    ctx.lineTo(width * .94, horizon * .8); ctx.lineTo(width, horizon * .65); ctx.lineTo(width, horizon); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ffcbb29c'; ctx.beginPath(); ctx.moveTo(width * .29, horizon * .53); ctx.lineTo(width * .255, horizon * .62); ctx.lineTo(width * .29, horizon * .6); ctx.lineTo(width * .32, horizon * .65);
+    ctx.lineTo(width * .4, horizon * .83); ctx.closePath(); ctx.fill();
+    }
+    drawIceFloor(horizon, projection);
+    for (let i = 0; i < columns; i++) {
+      const cameraX = ((i + .5) / columns) * 2 - 1;
+      const angle = player.angle + Math.atan(cameraX * Math.tan(FOV / 2));
+      const ray = castRay(angle); zBuffer[i] = ray.distance;
+      if (selectedMapId === 'city') {
+        const blockX = Math.floor(ray.cellX / 5), blockY = Math.floor(ray.cellY / 5);
+        const style = (blockX * 13 + blockY * 7 + blockX * blockY) % 5;
+        const buildingHeight = 1.72 + style * .18;
+        const wallH = Math.min(height * 2, projection * buildingHeight / Math.max(.08, ray.distance));
+        const top = horizon - projection * (buildingHeight - .41) / Math.max(.08, ray.distance);
+        const shade = Math.max(.2, 1 - ray.distance / 20) * (ray.side ? .76 : 1);
+        const facades = [[145, 119, 103], [94, 121, 145], [150, 99, 77], [78, 99, 128], [109, 129, 112]];
+        const [baseR, baseG, baseB] = facades[style];
+        const brickTone = ((ray.cellX + ray.cellY * 3) % 3 - 1) * 5;
+        const stripX = i * width / columns, stripW = width / columns + 1;
+        ctx.fillStyle = `rgb(${Math.max(0, baseR * shade + brickTone)},${Math.max(0, baseG * shade + brickTone)},${Math.max(0, baseB * shade + brickTone)})`;
+        ctx.fillRect(stripX, top, stripW, wallH);
+        ctx.fillStyle = `rgba(226,222,201,${.42 * shade})`;
+        ctx.fillRect(stripX, top, stripW, Math.max(1, 3 * dpr));
+        ctx.fillStyle = `rgba(22,29,43,${.7 * shade})`;
+        ctx.fillRect(stripX, top + wallH - 4 * dpr, stripW, 4 * dpr);
+        for (let floor = 0; floor < 4; floor++) {
+          const windowTop = top + wallH * (.105 + floor * .225);
+          const windowH = wallH * .145;
+          if (ray.tex > .17 && ray.tex < .83) {
+            const lit = (ray.cellX + ray.cellY + floor + style) % 4 !== 0;
+            ctx.fillStyle = `rgba(28,37,50,${.92 * shade})`;
+            ctx.fillRect(stripX, windowTop, stripW, windowH);
+            ctx.fillStyle = lit
+              ? `rgba(255,${185 + style * 7},${116 + style * 12},${.72 * shade})`
+              : `rgba(112,157,187,${.47 * shade})`;
+            ctx.fillRect(stripX, windowTop + 2 * dpr, stripW, Math.max(1, windowH - 4 * dpr));
+            if (ray.tex > .485 && ray.tex < .515) {
+              ctx.fillStyle = `rgba(37,48,62,${.9 * shade})`;
+              ctx.fillRect(stripX, windowTop, stripW, windowH);
+            }
+            ctx.fillStyle = `rgba(224,228,218,${.62 * shade})`;
+            ctx.fillRect(stripX, windowTop + windowH - Math.max(1, 2 * dpr), stripW, Math.max(1, 2 * dpr));
+          }
+          if (floor < 3) {
+            ctx.fillStyle = `rgba(224,218,201,${.27 * shade})`;
+            ctx.fillRect(stripX, top + wallH * (.31 + floor * .225), stripW, Math.max(1, 2 * dpr));
+          }
+        }
+        if (ray.tex > .405 && ray.tex < .595) {
+          ctx.fillStyle = `rgba(33,43,55,${.92 * shade})`;
+          ctx.fillRect(stripX, top + wallH * .77, stripW, wallH * .22);
+          ctx.fillStyle = `rgba(224,195,148,${.42 * shade})`;
+          ctx.fillRect(stripX, top + wallH * .77, stripW, Math.max(1, 2 * dpr));
+        }
+        const seam = ray.tex < .025 || ray.tex > .975;
+        if (seam) {
+          ctx.fillStyle = `rgba(27,36,50,${.58 * shade})`;
+          ctx.fillRect(stripX, top + 3 * dpr, stripW, Math.max(1, wallH - 7 * dpr));
+        }
+      } else {
+        const wallH = Math.min(height * 2, projection * .82 / Math.max(.08, ray.distance));
+        const top = horizon - wallH / 2;
+        const stripe = Math.floor(ray.tex * 8) % 2 === 0 ? 1 : .78;
+        const shade = Math.max(.24, 1 - ray.distance / 13) * (ray.side ? .72 : 1) * stripe;
+        const r = Math.floor(184 * shade), g = Math.floor(158 * shade), b = Math.floor(220 * shade);
+        const tile = (ray.cellX * 3 + ray.cellY * 5) % 4;
+        const tintR = tile === 0 ? 18 : tile === 1 ? -14 : tile === 2 ? 7 : -5;
+        const tintG = tile === 0 ? 4 : tile === 1 ? -11 : tile === 2 ? 8 : -3;
+        const tintB = tile === 0 ? 8 : tile === 1 ? 5 : tile === 2 ? 14 : -7;
+        ctx.fillStyle = `rgb(${Math.max(0,r + tintR)},${Math.max(0,g + tintG)},${Math.max(0,b + tintB)})`;
+        ctx.fillRect(i * width / columns, top, width / columns + 1, wallH);
+        ctx.fillStyle = `rgba(255,246,223,${.34 * shade})`;
+        ctx.fillRect(i * width / columns, top, width / columns + 1, Math.max(1, 2 * dpr));
+        ctx.fillStyle = `rgba(33,24,56,${.29 / Math.max(.65, shade)})`;
+        ctx.fillRect(i * width / columns, top + wallH - 3 * dpr, width / columns + 1, 3 * dpr);
+        const seam = ray.tex < .035 || ray.tex > .965;
+        if (seam) {
+          ctx.fillStyle = `rgba(55,38,84,${.32 * shade})`;
+          ctx.fillRect(i * width / columns, top + 2 * dpr, width / columns + 1, Math.max(1, wallH - 5 * dpr));
+          ctx.fillStyle = `rgba(255,238,214,${.32 * shade})`;
+          ctx.fillRect(i * width / columns, top + 2 * dpr, width / columns + 1, Math.max(1, wallH - 5 * dpr));
+        }
+        for (const band of [.32, .68]) {
+          ctx.fillStyle = `rgba(52,37,79,${.22 * shade})`;
+          ctx.fillRect(i * width / columns, top + wallH * band, width / columns + 1, Math.max(1, dpr));
+        }
+        if ((ray.cellX * 7 + ray.cellY * 11) % 9 === 0 && ray.tex > .34 && ray.tex < .68) {
+          ctx.fillStyle = `rgba(255,216,120,${.52 * shade})`;
+          ctx.fillRect(i * width / columns, top + wallH * .16, width / columns + 1, Math.max(1, 2 * dpr));
+        }
+      }
+    }
+    const actors = network.active ? [...enemies, ...Array.from(network.remotes.values()).filter(remote => remote.health > 0)] : enemies;
+    const visible = actors.map(e => {
+      const dx = e.x - player.x, dy = e.y - player.y, dist = Math.hypot(dx, dy);
+      let a = Math.atan2(dy, dx) - player.angle; a = Math.atan2(Math.sin(a), Math.cos(a));
+      return { e, dist, a };
+    }).filter(o => Math.abs(o.a) < FOV * .75 && o.dist > .1).sort((a, b) => b.dist * Math.cos(b.a) - a.dist * Math.cos(a.a));
+    for (const o of visible) {
+      const screenX = width / 2 + Math.tan(o.a) * projection;
+      const depth = o.dist * Math.cos(o.a);
+      const spriteH = projection * o.e.hitHeight / depth;
+      const floorY = horizon + projection * .41 / depth;
+      drawPenguin(o.e, depth, screenX, spriteH, floorY);
+    }
+    drawProjectiles();
+    drawWaveBanner();
+    // Sparse flakes add motion without obscuring aiming.
+    ctx.fillStyle = '#fff4df85';
+    for (const flake of snow) {
+      flake.y += flake.v * dt; flake.x += Math.sin(flake.y * .012) * 7 * dpr * dt;
+      if (flake.y > height) { flake.y = -4; flake.x = Math.random() * width; }
+      ctx.globalAlpha = .22 + .35 * (flake.r / (3 * dpr)); ctx.beginPath(); ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // Crosshair and little snowball launcher at the bottom of the view.
+    const cx = width / 2, cy = height / 2;
+    ctx.strokeStyle = '#fff1c7'; ctx.lineWidth = 1.7 * dpr; ctx.beginPath();
+    ctx.moveTo(cx - 9*dpr, cy); ctx.lineTo(cx - 3*dpr, cy); ctx.moveTo(cx + 3*dpr, cy); ctx.lineTo(cx + 9*dpr, cy);
+    ctx.moveTo(cx, cy - 9*dpr); ctx.lineTo(cx, cy - 3*dpr); ctx.moveTo(cx, cy + 3*dpr); ctx.lineTo(cx, cy + 9*dpr); ctx.stroke();
+    const gunY = height - 72 * dpr + recoil * 12 * dpr;
+    ctx.fillStyle = '#25244f'; ctx.beginPath(); ctx.roundRect(cx - 48*dpr, gunY, 96*dpr, 95*dpr, [22*dpr,22*dpr,0,0]); ctx.fill();
+    ctx.fillStyle = '#ff9e78'; ctx.beginPath(); ctx.roundRect(cx - 25*dpr, gunY - 30*dpr, 50*dpr, 74*dpr, [18*dpr,18*dpr,7*dpr,7*dpr]); ctx.fill();
+    ctx.fillStyle = '#fff0bd'; ctx.beginPath(); ctx.arc(cx, gunY - 22*dpr, 15*dpr, 0, Math.PI*2); ctx.fill();
+    if (shotFlash > 0) { ctx.fillStyle = `rgba(255,226,159,${shotFlash * 5})`; ctx.beginPath(); ctx.arc(cx, gunY - 38*dpr, 31*dpr, 0, Math.PI*2); ctx.fill(); }
+  }
+  function frame(now) {
+    const dt = Math.min(.04, (now - (lastTime || now)) / 1000); lastTime = now;
+    update(dt); publishPlayerState(now); checkOnlineWinner(); render(dt);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  const invitedRoom = new URLSearchParams(window.location.search).get('room');
+  if (invitedRoom) {
+    showOverlay('online-setup');
+    if (/^[A-Z0-9]{6}$/i.test(invitedRoom)) {
+      ui.roomCodeInput.value = invitedRoom.toUpperCase();
+      ui.onlineMessage.textContent = `Inbjudan till rum ${invitedRoom.toUpperCase()}. Ange ditt namn och gå med.`;
+    } else {
+      ui.onlineMessage.textContent = 'Inbjudningslänken innehåller en ogiltig rumskod.';
+    }
+  } else showOverlay('start');
+})();
+</script>
+</body>
+</html>
+
